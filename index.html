@@ -564,7 +564,7 @@ const GUIDE=[
  {id:"incontournables",label:"Les incontournables",hint:"Notes, durées, le saviez-vous"},
  {id:"balades",label:"Balades à pied",hint:"Ghardaïa et Béni Isguen, point par point"},
  {id:"comprendre",label:"Comprendre",hint:"Histoire, Mozabites, architecture, eau"},
- {id:"carte",label:"Carte de la vallée",hint:"Les ksour, la palmeraie, l'aéroport"},
+ {id:"carte",label:"Carte de la vallée",hint:"Les ksour, le logement, l'aéroport"},
  {id:"manger",label:"Que manger",hint:"Plats, dattes, avis des enfants"},
  {id:"acheter",label:"Qu'acheter",hint:"Tapis, vannerie, dattes, conseils"},
  {id:"savoirvivre",label:"Savoir-vivre",hint:"Saluer, photos, thé, pourboire"},
@@ -666,7 +666,8 @@ function renderSky(){const age=moonAge("2026-10-26"),full=age>13&&age<17;
 let mapFocus=null;
 const PLACES={
  ghardaia:{x:150,y:120,l:"Ghardaïa",c:"ochre"},melika:{x:205,y:150,l:"Melika",c:"muted"},beniisguen:{x:250,y:205,l:"Béni Isguen",c:"ochre"},
- tafilalt:{x:335,y:248,l:"Tafilalt",c:"ochre"},bounoura:{x:300,y:170,l:"Bounoura",c:"muted"},elatteuf:{x:420,y:200,l:"El Atteuf",c:"ochre"},palmeraie:{x:178,y:258,l:"Palmeraie",c:"palm"},aeroport:{x:420,y:360,l:"Aéroport",c:"muted"}};
+ tafilalt:{x:335,y:248,l:"Tafilalt",c:"ochre"},bounoura:{x:300,y:170,l:"Bounoura",c:"muted"},elatteuf:{x:420,y:200,l:"El Atteuf",c:"ochre"},
+ villa:{x:300,y:278,l:"Logement (approx.)",c:"door"},palmeraie:{x:178,y:258,l:"Palmeraie",c:"palm"},aeroport:{x:420,y:360,l:"Aéroport",c:"muted"}};
 function renderMap(){const P=PLACES;const route1=["ghardaia","beniisguen","palmeraie"],route2=["elatteuf","tafilalt"];
  const line=r=>r.map(k=>`${P[k].x},${P[k].y}`).join(" ");
  const pin=(k)=>{const p=P[k],f=mapFocus===k;return `<g><circle cx="${p.x}" cy="${p.y}" r="${f?12:8}" fill="var(--${p.c})" stroke="var(--surface)" stroke-width="2"/>${f?`<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" stroke="var(--${p.c})" stroke-width="2"/>`:""}<text x="${p.x+13}" y="${p.y+7}" font-size="${f?24:20}" font-weight="${f?700:400}" fill="var(--fg)" font-family="Atkinson Hyperlegible, system-ui, sans-serif">${esc(p.l)}</text></g>`};
@@ -684,7 +685,7 @@ function renderMap(){const P=PLACES;const route1=["ghardaia","beniisguen","palme
   ${Object.keys(P).map(pin).join("")}
   <g transform="translate(500,40)"><text x="0" y="0" text-anchor="middle" font-size="18" fill="var(--muted)" font-family="IBM Plex Mono, monospace">N</text><path d="M0 6 L6 24 L0 19 L-6 24 Z" fill="var(--muted)"/></g>
  </svg></div>
- <div class="legend" style="margin-top:8px"><span><span class="dot" style="background:var(--ochre)"></span>Dim. 25 (trait plein)</span><span><span class="dot" style="background:var(--palm)"></span>Lun. 26 (pointillés)</span><span><span class="dot" style="background:var(--muted)"></span>Non visité</span></div>
+ <div class="legend" style="margin-top:8px"><span><span class="dot" style="background:var(--ochre)"></span>Dim. 25 (trait plein)</span><span><span class="dot" style="background:var(--palm)"></span>Lun. 26 (pointillés)</span><span><span class="dot" style="background:var(--door)"></span>Logement (position approximative)</span><span><span class="dot" style="background:var(--muted)"></span>Non visité</span></div>
  <div class="toolbar" style="margin-top:10px">${Object.keys(P).map(k=>`<button class="btn" type="button" data-pl="${k}">${esc(P[k].l)}</button>`).join("")}</div>
  <p class="small">Pour un itinéraire réel, ouvrez Google Maps : <a href="https://www.google.com/maps/search/?api=1&query=Beni+Isguen+Ghardaia" target="_blank" rel="noopener">Béni Isguen</a> · <a href="https://www.google.com/maps/search/?api=1&query=El+Atteuf+Ghardaia" target="_blank" rel="noopener">El Atteuf</a> · <a href="https://www.google.com/maps/search/?api=1&query=Tafilalt+Ghardaia" target="_blank" rel="noopener">Tafilalt</a>.</p>`;
  view.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{mapFocus=b.dataset.pl;renderMap()});wireGo()}
