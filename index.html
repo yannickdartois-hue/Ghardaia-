@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#A9561F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghardaïa">
+<title>Ghardaïa en famille</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: carnet de route en une colonne. Onglets collés en haut (3 jours, Guide, Enfants, Pratique). Chaque étape = carte dépliable avec audio adulte et enfant. */
+:root{
+  --bg:#F2F2EE;--surface:#FFFFFF;--fg:#1F2422;--muted:#5E6661;--line:#DCDDD6;
+  --ochre:#A9561F;--ochre-soft:#F3E3D6;--palm:#2F5D50;--palm-soft:#DCE8E3;--door:#2C6E8F;--door-soft:#DCEAF1;--warn:#9A3B1E;
+  --on-accent:#FFFFFF;--star:#C08A1E;
+  --f-display:"Young Serif",Georgia,serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141716;--surface:#1D2120;--fg:#ECEBE4;--muted:#A3A9A4;--line:#323835;
+  --ochre:#E39A63;--ochre-soft:#3A2A1F;--palm:#7FB8A4;--palm-soft:#1F2F2A;--door:#7DB6D3;--door-soft:#1C2B33;--warn:#F08A6B;--on-accent:#17110C;--star:#E8BE5A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141716;--surface:#1D2120;--fg:#ECEBE4;--muted:#A3A9A4;--line:#323835;
+  --ochre:#E39A63;--ochre-soft:#3A2A1F;--palm:#7FB8A4;--palm-soft:#1F2F2A;--door:#7DB6D3;--door-soft:#1C2B33;--warn:#F08A6B;--on-accent:#17110C;--star:#E8BE5A;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto}
+header.top{padding-block:20px 4px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;gap:12px;align-items:center}
+.brand svg{flex:0 0 auto;width:48px;height:48px;border-radius:12px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ochre)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,8vw,42px);line-height:1.05;margin:2px 0 0;text-wrap:balance}
+.now{display:grid;gap:6px;background:var(--palm-soft);border-radius:12px;padding:10px 14px;font-size:15px}
+.now b{color:var(--palm)}
+.now .row{display:flex;gap:8px 14px;flex-wrap:wrap}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;font:inherit;font-size:15px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:8px 14px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,summary:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--door);outline-offset:2px}
+h2{font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1.15;margin:18px 0 4px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0;text-wrap:balance}
+.daymeta{color:var(--muted);font-size:15px;margin:0 0 14px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.btn{font:inherit;font-size:15px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--ochre);border-color:var(--ochre);color:var(--on-accent)}
+.btn.kid{background:var(--door-soft);border-color:var(--door);color:var(--fg)}
+.stack{display:flex;flex-direction:column;gap:10px}
+details.stop{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+details.stop[open]{border-color:var(--ochre)}
+details.stop.current{box-shadow:0 0 0 2px var(--palm)}
+summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px}
+summary::-webkit-details-marker{display:none}
+.time{font-family:var(--f-mono);font-size:13px;color:var(--ochre);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stitle{min-width:0}
+.stitle strong{display:block;font-size:17px;line-height:1.25}
+.stitle span{display:block;color:var(--muted);font-size:14px}
+.tag{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:6px;background:var(--palm-soft);color:var(--palm);white-space:nowrap}
+.tag.opt{background:var(--ochre-soft);color:var(--ochre)}
+.body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.body p,.card p{margin:0}
+ul.list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.k{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.box{padding:8px 12px;background:var(--bg);border-radius:0 8px 8px 0;font-size:15px;border-left:3px solid var(--door)}
+.box.kids{border-left-color:var(--ochre)}
+.box.know{border-left-color:var(--star)}
+.rule{color:var(--warn);font-size:15px}
+.done{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted)}
+.done input{width:20px;height:20px;accent-color:var(--palm)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{font:inherit;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;color:var(--fg);display:flex;flex-direction:column;gap:4px}
+.tile strong{font-family:var(--f-display);font-weight:400;font-size:19px}
+.tile span{font-size:14px;color:var(--muted)}
+.back{margin-top:4px}
+.stars{color:var(--star);letter-spacing:2px;font-size:16px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+dl.gloss{display:grid;grid-template-columns:minmax(90px,auto) 1fr;gap:8px 14px;margin:0}
+dl.gloss dt{font-family:var(--f-display);color:var(--ochre)}
+dl.gloss dd{margin:0;min-width:0}
+.quiz .q{margin-bottom:14px}
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.opts button.ok{background:var(--palm);color:var(--bg);border-color:var(--palm)}
+.opts button.ko{background:var(--ochre-soft);border-color:var(--ochre)}
+.fb{font-size:14px;color:var(--muted);margin-top:4px}
+.phr{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.phr .fr{color:var(--muted);font-size:14px}
+.phr .ar{font-weight:700}
+.contact{font-family:var(--f-mono);font-size:15px;user-select:all}
+table.pt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+table.pt th,table.pt td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--line)}
+table.pt th{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+table.pt tr.next td{color:var(--palm);font-weight:700}
+.scroll{overflow-x:auto}
+.bingo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bingo button{font:inherit;font-size:14px;min-height:78px;border:1px dashed var(--line);border-radius:12px;background:var(--surface);color:var(--fg);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.bingo button .ic{font-size:22px}
+.bingo button[aria-pressed="true"]{background:var(--palm);color:var(--bg);border-style:solid;border-color:var(--palm)}
+.mapbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px}
+.mapbox svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.player{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--fg);color:var(--bg);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;gap:10px;align-items:center}
+.player .lbl{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player button{font:inherit;font-size:14px;background:transparent;color:var(--bg);border:1px solid currentColor;border-radius:8px;padding:6px 10px;cursor:pointer}
+.small{font-size:13px;color:var(--muted)}
+.check ul{padding-left:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.check li{list-style:none}
+.check label{display:flex;gap:8px;align-items:flex-start}
+.check input{margin-top:5px;accent-color:var(--palm)}
+.boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.ebox{border-radius:10px;padding:8px 12px;font-size:15px;background:var(--bg)}
+.ebox b{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.ebox.coeur b{color:var(--ochre)} .ebox.bon b{color:var(--palm)} .ebox.att b{color:var(--warn)} .ebox.enf b{color:var(--door)}
+.photos{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}
+.photos figure{margin:0;flex:0 0 82%;max-width:420px;scroll-snap-align:start}
+.photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--line)}
+.photos figcaption{font-size:12px;color:var(--muted);margin-top:4px}
+.photos figcaption a{color:inherit}
+.walk ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.walk li{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:start}
+.walk .num{width:30px;height:30px;border-radius:50%;background:var(--ochre);color:var(--on-accent);display:grid;place-items:center;font-family:var(--f-mono);font-size:14px}
+.walk li.on .num{background:var(--palm)}
+.walk li div{min-width:0}
+.tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--ochre-soft);display:flex;flex-direction:column;gap:10px}
+.tl li{position:relative}
+.tl li::before{content:"";position:absolute;left:-21px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--ochre)}
+.tl .yr{font-family:var(--f-mono);font-size:13px;color:var(--ochre)}
+.svgbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;overflow-x:auto}
+.svgbox svg{width:100%;min-width:520px;height:auto;display:block;font-family:"Atkinson Hyperlegible",system-ui,sans-serif}
+.host label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.host input{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.kidrate{font-size:14px;color:var(--door)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 96 96" role="img" aria-label="Icône : minaret de Ghardaïa au couchant">
+        <rect width="96" height="96" rx="22" fill="#A9561F"/>
+        <circle cx="66" cy="34" r="13" fill="#F3C98B"/>
+        <path d="M44 14 L50 14 L52 40 L42 40 Z" fill="#F2F2EE"/>
+        <rect x="43" y="10" width="8" height="5" rx="1" fill="#F2F2EE"/>
+        <path d="M14 96 L14 70 L24 70 L24 62 L34 62 L34 54 L40 54 L40 40 L54 40 L54 54 L62 54 L62 62 L72 62 L72 70 L82 70 L82 96 Z" fill="#F2F2EE"/>
+        <rect x="45" y="46" width="4" height="6" rx="2" fill="#2C6E8F"/>
+        <rect x="27" y="74" width="4" height="7" rx="2" fill="#2C6E8F"/>
+        <rect x="64" y="66" width="4" height="7" rx="2" fill="#2C6E8F"/>
+        <path d="M0 96 Q 48 84 96 96 Z" fill="#2F5D50"/>
+      </svg>
+      <div>
+        <div class="eyebrow">Vallée du M'Zab · 25–27 octobre</div>
+        <h1>Ghardaïa en famille</h1>
+      </div>
+    </div>
+    <div class="now" id="now" aria-live="polite"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs" aria-label="Rubriques"></nav>
+  <main id="view"></main>
+</div>
+
+<div class="player" id="player" hidden>
+  <span class="lbl" id="plbl">Lecture…</span>
+  <button id="ppause" type="button">Pause</button>
+  <button id="pstop" type="button">Arrêter</button>
+</div>
+
+<script>
+/* ===================== CONTENU ===================== */
+const DAYS = [
+ {id:"j1", date:"2026-10-25", tab:"Dim. 25", title:"Ghardaïa, Béni Isguen, palmeraie", meta:"Avec le guide",
+  stops:[
+   {t:"09:00",e:"11:00",name:"Ksar de Ghardaïa et son marché",sub:"Le plus grand ksar, cœur commercial de la vallée",tag:"Guide",place:"ghardaia",
+    say:"Ghardaïa a été fondée vers mille quarante-huit ou mille cinquante-trois, selon les sources, par des Ibadites réfugiés de Tahert, l'actuelle Tiaret, après la chute du royaume rostémide. La légende donne à la ville le nom d'une jeune femme, Daïa, qui vivait dans une grotte : Ghar Daïa, la grotte de Daïa. On commence par la grande place du marché, rectangulaire, d'environ trois mille quatre cents mètres carrés, entourée d'arcades. Elle date de la fin du dix-neuvième siècle. Le marché plus ancien, la Rahba, se trouve à l'intérieur du ksar. Ensuite, on monte par les ruelles, qui tournent sans cesse : elles cassent le vent de sable, gardent l'ombre et gênent un assaillant. Regardez les entrées des maisons : c'est la skifa, une entrée en chicane. Depuis la rue, on ne voit jamais l'intérieur, car la maison est tournée vers son patio. Tout en haut, la grande mosquée et son minaret en forme de pyramide très allongée dominent la ville. La mosquée était aussi le dernier refuge en cas de siège, avec un arsenal et un silo à grains. On l'admire de l'extérieur, car on n'entre pas dans les mosquées.",
+    kid:"Bienvenue à Ghardaïa ! Son nom vient d'une légende : une jeune femme, Daïa, vivait dans une grotte, et en arabe, une grotte se dit ghar. Ghar Daïa, ça a donné Ghardaïa. La ville est construite comme un gâteau en étages, avec une tour pointue tout en haut. Les rues tournent tout le temps, comme un labyrinthe. C'est fait exprès : le vent de sable ne peut pas s'engouffrer, et l'ombre reste dans la rue. Regardez les portes : quand elles sont ouvertes, on ne voit jamais l'intérieur, parce que le couloir fait un virage. Votre mission : trouver une porte bleue !",
+    see:["La grande place à arcades, de la fin du XIXe siècle","Les ruelles qui tournent vers le sommet","La skifa, l'entrée en chicane des maisons","Le minaret en pyramide très allongée","Les tapis sous les arcades du marché"],
+    ask:"Pouvez-vous nous montrer la Rahba, l'ancien marché, et nous expliquer les motifs d'un tapis ?",
+    kids:"Comptez les virages entre la place et le minaret.",
+    tip:"Les tapis de Ghardaïa sont en laine et poil de chèvre, à motifs géométriques, dominés par le rouge, le noir et l'ocre. Voir « Qu'acheter »."},
+   {t:"11:15",e:"13:00",name:"Ksar de Béni Isguen",sub:"La cité la mieux préservée, guide local obligatoire",tag:"Guide",place:"beniisguen",
+    say:"Béni Isguen est aujourd'hui considérée comme la ville sainte du M'Zab. Cette réputation est pourtant assez récente : au dix-neuvième siècle, c'était Melika qui portait ce titre, et Béni Isguen passait pour la cité militaire. On y entre par une lourde porte en troncs de palmier, et la visite se fait obligatoirement avec un guide local. L'ambiance change tout de suite : silence, rues impeccables. Au dix-neuvième siècle, toutes les portes de ses deux enceintes étaient fermées la nuit. Les règles sont strictes : on ne fume pas dans les rues, on porte une tenue couverte, et on ne photographie jamais les habitants. Les femmes mozabites portent un grand voile blanc. Montez jusqu'à la tour Boulila, le point le plus haut de la ville : la vue embrasse le ksar, les remparts et la palmeraie.",
+    kid:"Ici, c'est la ville la plus calme de toute la vallée. On parle doucement, comme dans une bibliothèque. Les dames portent un grand voile blanc, et on ne les prend jamais en photo, c'est une règle très importante. La porte d'entrée est faite avec des troncs de palmier ! Montez jusqu'à la tour Boulila : autrefois, des veilleurs surveillaient le désert depuis les tours pour voir arriver les visiteurs de loin.",
+    see:["La porte en troncs de palmier","Les ruelles silencieuses","Les remparts","La tour Boulila, point culminant, et sa vue"],
+    rules:"Guide local obligatoire. Tenue couverte, épaules et jambes. Ne pas fumer. Aucune photo des habitants.",
+    ask:"Pourquoi Béni Isguen a-t-elle remplacé Melika comme ville sainte ? Quel est le rôle des azzaba aujourd'hui ?",
+    kids:"Jeu du silence : qui traverse une ruelle sans dire un mot ?"},
+   {t:"13:00",e:"14:00",name:"Déjeuner",sub:"Spécialités mozabites et dattes de saison",tag:"Pause",
+    say:"Pause déjeuner. Demandez si l'on sert une spécialité mozabite, comme l'ouchou souffer, un couscous aux herbes, ou l'ouchou tinni, un couscous aux dattes. Fin octobre, c'est la saison des dattes : goûtez-les fraîches. Voir la rubrique « Que manger »."},
+   {t:"14:00",e:"15:30",name:"Repos",sub:"Piscine ou sieste, au plus chaud",tag:"Pause",
+    say:"Repos au plus chaud de la journée. Piscine ou sieste à votre hébergement, avant la fin d'après-midi."},
+   {t:"15:30",e:"16:00",name:"Marché à la criée de Béni Isguen",sub:"Place Lalla Achou, après le Asr, sauf le vendredi",tag:"Option",opt:true,place:"beniisguen",
+    say:"Le marché à la criée de Béni Isguen se tient sur la place Lalla Achou, en bordure du ksar, tous les jours sauf le vendredi, sous le contrôle des azzaba, le conseil religieux. Il commence généralement en fin d'après-midi, après la prière du Asr. Un crieur fait le tour de la place avec les objets à vendre et annonce les prix à voix haute. Les acheteurs enchérissent d'un geste. On peut regarder sans rien acheter. Tradition locale : les femmes mozabites ne traversent pas la place du marché.",
+    kid:"Une vente à la criée, c'est comme un jeu : un monsieur fait le tour de la place en criant un prix. Si quelqu'un veut l'objet plus cher, il fait un petit signe. Le dernier qui a fait signe gagne l'objet. Regardez bien qui lève la main !",
+    see:["Le crieur qui fait le tour de la place","Les acheteurs qui enchérissent d'un geste"],
+    ask:"Le marché a-t-il lieu aujourd'hui, et à quelle heure exactement ?"},
+   {t:"16:00",e:"18:15",name:"Palmeraie, partage de l'eau, coucher de soleil",sub:"La clé de tout le M'Zab",tag:"Guide",place:"palmeraie",
+    say:"La palmeraie est la clé du M'Zab. L'UNESCO considère le ksar, le cimetière et la palmeraie comme les trois éléments indissociables du site. Ici, il ne pleut presque jamais, mais l'oued M'Zab connaît des crues soudaines. Pendant des siècles, les Mozabites ont construit un système de captage, de stockage et de partage de cette eau de crue. Des barrages souterrains retiennent l'eau sous le lit de l'oued, comme de petites nappes. Des rigoles, des canalisations en pierre, des séguias et des aqueducs suivent la pente du terrain. Les tissembades, des canalisations en grandes pierres plates, cassent la vitesse de l'eau. Ensuite, de grands canaux distributeurs alimentent la palmeraie, et la part de chaque jardin est calculée selon sa surface et son nombre de palmiers. Des tours de guet surveillaient les crues. Aujourd'hui encore, une association, les Oumana El-Sayl, les gardiens des crues, gère ce patrimoine. La terrible crue du premier octobre deux mille huit a emporté une partie de ces ouvrages. Regardez aussi les maisons d'été : à la saison chaude, les familles quittaient le ksar pour vivre au frais, sous les palmiers. Au coucher du soleil, les palmiers deviennent des ombres noires et la lumière dorée glisse sur les murs.",
+    kid:"Ici, il ne pleut presque jamais. Alors comment les palmiers ont-ils de l'eau ? Quand il y a un gros orage très loin, la rivière se remplit d'un coup. Les habitants ont construit des barrages pour attraper cette eau et la cacher sous la terre, comme dans une éponge. Ensuite, des canaux la partagent entre tous les jardins : plus un jardin a de palmiers, plus il reçoit d'eau. Et des gardiens surveillent que personne ne triche !",
+    see:["Les canaux et les répartiteurs","Les canalisations en pierres plates","Les puits","Les maisons d'été","Le coucher de soleil"],
+    ask:"Où sont les ouvrages des Oumana El-Sayl, et comment la part d'eau de chaque jardin est-elle calculée ?",
+    kids:"Plus un jardin a de palmiers, plus il reçoit d'eau. Comptez les palmiers d'un jardin !"},
+  ]},
+ {id:"j2", date:"2026-10-26", tab:"Lun. 26", title:"El Atteuf, Tafilalt, Sebseb, dunes", meta:"Avec le guide · retour vers 19h30, route non éclairée",
+  stops:[
+   {t:"09:00",e:"10:45",name:"Ksar d'El Atteuf",sub:"La doyenne de la vallée, fondée en 1012",tag:"Guide",place:"elatteuf",
+    say:"El Atteuf est la doyenne de la vallée, fondée en mille douze. Son nom signifie « le tournant ». La ville serait née de la fusion de plusieurs villages existants, fédérés par des Ibadites venus de l'oued Diya. Son enceinte abrite deux mosquées, chacune avec son minaret pyramidal. La vedette, c'est le mausolée de Sidi Brahim, fondé au quinzième siècle, qui abrite la tombe du cheikh. C'est un ensemble d'arcades inégales, blanches, ouvertes sur la nature, comme modelées à la main. Le Corbusier a découvert la vallée en mille neuf cent trente et un, et il y est revenu en mille neuf cent trente-trois. Du ciel, il a parlé d'un « miracle de sagacité, d'ordonnance savante et bienfaisante ». On considère que Sidi Brahim a inspiré sa chapelle de Ronchamp, construite en mille neuf cent cinquante-cinq. Fernand Pouillon et André Ravéreau ont eux aussi été marqués par le M'Zab.",
+    kid:"El Atteuf, c'est la grand-mère de toutes les villes de la vallée : elle a plus de mille ans ! Son nom veut dire « le tournant ». Allez voir le monument de Sidi Brahim. Ses arches sont toutes différentes et toutes rondes, comme de la pâte à modeler. Un architecte très célèbre, Le Corbusier, est venu ici il y a presque cent ans, et ce bâtiment lui a donné des idées pour une église en France.",
+    see:["Les deux mosquées et leurs minarets pyramidaux","Le mausolée de Sidi Brahim et ses arcades inégales"],
+    ask:"Comment les villages d'origine ont-ils formé El Atteuf, et que représente Sidi Brahim pour les habitants ?",
+    kids:"Cherchez deux arcades identiques sur Sidi Brahim. Vous en trouvez ?"},
+   {t:"11:00",e:"12:30",name:"Ksar de Tafilalt",sub:"Le ksar moderne de la touiza",tag:"Guide",place:"tafilalt",
+    say:"Tafilalt, ou Tafilelt, est un ksar moderne bâti sur le plateau qui domine la vallée, au sud de Béni Isguen. L'idée naît dans les années mille neuf cent quatre-vingt-dix. En mille neuf cent quatre-vingt-dix-sept, Ahmed Nouh crée la fondation Amidoul, qui achète un terrain de vingt-deux hectares. Les premières maisons sont distribuées en deux mille, et la ville est inaugurée en deux mille quatre. Elle compte environ un millier de maisons et a atteint six mille habitants en deux mille treize. Le principe, c'est la touiza, l'entraide : la charte rend obligatoire la participation aux travaux d'intérêt général. Les maisons sont regroupées en îlots de vingt-huit à trente foyers, qui assurent la propreté à tour de rôle. Chaque habitant entretient un palmier, un arbre d'ornement et un arbre fruitier, et la moitié des eaux usées est recyclée. Le projet a reçu le prix de la Ligue arabe pour l'environnement en deux mille quatorze, et un prix de la ville durable à la COP vingt-deux de Marrakech. C'est un quartier habité : on le visite discrètement.",
+    kid:"Tafilalt est une ville toute neuve, mais construite comme les vieilles villes. Les familles aident toutes ensemble à garder le quartier propre, chacune à son tour. Et chaque famille doit s'occuper de trois arbres : un palmier, un arbre à fleurs et un arbre à fruits ! Regardez comme les murs sont épais : ils gardent la fraîcheur.",
+    see:["Les murs épais et les petites ouvertures","Les îlots de maisons","Les arbres entretenus par chaque famille"],
+    ask:"Comment fonctionne la touiza au quotidien, et que se passe-t-il si une famille ne respecte pas la charte ?",
+    kids:"Devant combien de maisons voyez-vous un palmier ? Comptez !"},
+   {t:"12:30",e:"13:30",name:"Déjeuner",sub:"",tag:"Pause",say:"Pause déjeuner avant la route du désert."},
+   {t:"14:00",e:"15:00",name:"Route vers Sebseb",sub:"Environ 40 km au sud de Ghardaïa",tag:"Route",
+    say:"Départ vers le sud. Sebseb est à environ quarante kilomètres de Ghardaïa. Le paysage change : on quitte la vallée et ses ksour pour le désert. Pensez à l'eau, aux chapeaux et à une petite laine pour le soir."},
+   {t:"15:00",e:"16:15",name:"Sebseb",sub:"Une oasis au sud de la vallée",tag:"Guide",place:"sebseb",
+    say:"Sebseb est une oasis à environ quarante kilomètres au sud de Ghardaïa. Elle est plus rurale que la vallée du M'Zab. L'intérêt, c'est le contraste avec la palmeraie de la veille : une autre façon de vivre et de cultiver dans le désert. Laissez le guide raconter pourquoi il a choisi cet endroit.",
+    kid:"Hier, vous avez vu une palmeraie très ancienne. Ici, c'est une autre oasis. Comparez : qu'est-ce qui est pareil, qu'est-ce qui est différent ?",
+    see:["L'oasis et ses cultures"],
+    ask:"Pourquoi avez-vous choisi Sebseb, et comment y cultive-t-on aujourd'hui ?"},
+   {t:"16:30",e:"18:15",name:"Dunes de Mansoura",sub:"Le grand final, juste après Sebseb",tag:"Guide",place:"dunes",
+    say:"Les dunes de Mansoura, juste après Sebseb, sont le grand final du séjour. Montez au sommet d'une dune, pieds nus si le sable n'est plus brûlant. Regardez le sable changer de couleur pendant que le soleil descend : jaune, orange, puis rose. Retournez-vous au moment du coucher : ce soir, c'est la pleine lune, et elle se lève à l'est presque au moment où le soleil se couche à l'ouest. Restez encore un peu après : le ciel devient violet. Si le guide prépare le thé, acceptez, c'est un moment de partage.",
+    kid:"Les dunes ! Montez tout en haut, puis descendez en courant, en roulant ou en glissant. Regardez bien le sable : il change de couleur pendant que le soleil se couche, jaune, puis orange, puis rose. Et retournez-vous : de l'autre côté, une énorme lune ronde va se lever !",
+    see:["Le sable qui change de couleur","La pleine lune qui se lève à l'est","Le ciel violet après le coucher"],
+    kids:"Course en descente de dune. Qui roule le plus loin ?",
+    tip:"Lampe de poche pour redescendre à la nuit, petite laine : le désert se refroidit vite. Voir « Le ciel des dunes »."},
+   {t:"19:30",e:"",name:"Retour au logement",sub:"Route non éclairée",tag:"Route",
+    say:"Retour au logement par une route non éclairée. Dîner tranquille."},
+  ]},
+ {id:"j3", date:"2026-10-27", tab:"Mar. 27", title:"Matinée libre, départ", meta:"Départ de l'hébergement à 13h45",
+  stops:[
+   {t:"09:00",e:"12:00",name:"Matinée libre",sub:"Grasse matinée, piscine, derniers achats",tag:"Libre",
+    say:"Matinée libre. Grasse matinée, piscine, ou un dernier tour pour les achats. C'est le bon moment pour acheter les dattes à rapporter."},
+   {t:"12:00",e:"13:15",name:"Déjeuner, bagages",sub:"",tag:"Pause",say:"Déjeuner, puis bagages à treize heures quinze."},
+   {t:"13:45",e:"14:20",name:"Départ pour l'aéroport",sub:"Environ 20 km jusqu'à Noumérat",tag:"Route",
+    say:"Départ pour l'aéroport de Noumérat à treize heures quarante-cinq. Environ vingt kilomètres de route."},
+  ]},
+];
+
+const INTRO = "Aux dixième et onzième siècles, après la chute du royaume rostémide de Tahert, l'actuelle Tiaret, des Ibadites, une branche de l'islam minoritaire, se réfugient d'abord à Sedrata, près d'Ouargla, puis dans cette vallée aride de la Chebka du M'Zab. Entre mille douze et mille trois cent cinquante, ils y fondent cinq villes fortifiées : El Atteuf, Bounoura, Melika, Ghardaïa et Béni Isguen. C'est la pentapole du M'Zab, inscrite au patrimoine mondial de l'UNESCO en mille neuf cent quatre-vingt-deux. Le plan est toujours le même. La mosquée est bâtie comme une forteresse, dernier refuge en cas de siège, avec un arsenal et un silo à grains, et son minaret sert de tour de guet. Les maisons, des cubes de taille semblable, s'organisent en cercles autour d'elle jusqu'au rempart : c'est l'image d'une société égalitaire, qui protège l'intimité des familles. Autour du ksar, le cimetière et la palmeraie, avec ses maisons d'été. Les constructions sont en pierre, enduites à la chaux et au plâtre traditionnel. Ce modèle a fasciné les architectes du vingtième siècle : Le Corbusier, Fernand Pouillon, André Ravéreau.";
+
+const MUST = [
+ {name:"Ksar de Béni Isguen",stars:3,dur:"2 h",best:"Fin de matinée, puis le marché à la criée après le Asr",day:"Dim. 25",
+  why:"Le ksar le mieux préservé, avec ses remparts, sa porte en troncs de palmier et la vue depuis la tour Boulila.",
+  know:"Au XIXe siècle, la ville sainte du M'Zab était Melika. Béni Isguen passait alors pour la cité militaire."},
+ {name:"La palmeraie et le partage de l'eau",stars:3,dur:"2 h",best:"Fin d'après-midi, jusqu'au coucher du soleil",day:"Dim. 25",
+  why:"Ce qui explique tout le reste : un système de partage des eaux de crue entretenu depuis des siècles.",
+  know:"La part d'eau de chaque jardin dépend de sa surface et de son nombre de palmiers. L'association des Oumana El-Sayl veille encore sur les ouvrages."},
+ {name:"Les dunes de Mansoura",stars:3,dur:"1 h 45",best:"Coucher du soleil, puis lever de la pleine lune",day:"Lun. 26",
+  why:"Le grand final : le sable qui change de couleur, le silence, et la lune qui se lève à l'est.",
+  know:"Le 26 octobre 2026, c'est la pleine lune : elle se lève presque au moment où le soleil se couche."},
+ {name:"Mausolée de Sidi Brahim, El Atteuf",stars:3,dur:"1 h 45 avec le ksar",best:"Le matin, lumière douce",day:"Lun. 26",
+  why:"Des arcades blanches et inégales, du XVe siècle, dans la doyenne des villes du M'Zab.",
+  know:"Le Corbusier est venu au M'Zab en 1931 et 1933. On considère que Sidi Brahim a inspiré sa chapelle de Ronchamp, en 1955."},
+ {name:"Ksar de Ghardaïa et son marché",stars:2,dur:"2 h",best:"Le matin, quand le marché est animé",day:"Dim. 25",
+  why:"La grande place à arcades, les tapis, et la montée vers le minaret pyramidal.",
+  know:"Selon la légende, Ghardaïa vient de Ghar Daïa, la grotte de Daïa, une jeune femme qui y vivait."},
+ {name:"Ksar de Tafilalt",stars:2,dur:"1 h 30",best:"Fin de matinée",day:"Lun. 26",
+  why:"Une ville d'aujourd'hui bâtie selon des principes millénaires, primée pour son écologie.",
+  know:"Chaque habitant entretient trois arbres : un palmier, un arbre d'ornement et un arbre fruitier."},
+ {name:"Sebseb",stars:1,dur:"1 h 15",best:"Sur la route des dunes",day:"Lun. 26",
+  why:"Une oasis plus rurale, à environ 40 km au sud de Ghardaïa.",
+  know:"Laissez le guide raconter pourquoi il a choisi cet endroit : c'est souvent là qu'un guide montre ce qu'il aime."},
+];
+
+const FOOD = [
+ {name:"Ouchou souffer",kids:2,what:"Couscous aux herbes, spécialité mozabite.",where:"Maisons d'hôtes et cuisine familiale. Demandez à votre hébergement.",tip:"Les meilleurs repas mozabites se mangent souvent chez l'habitant."},
+ {name:"Ouchou tinni",kids:3,what:"Couscous aux dattes, spécialité mozabite, sucré-salé.",where:"Maisons d'hôtes, sur demande.",tip:"Une bonne porte d'entrée pour les enfants."},
+ {name:"Tiftitine",kids:3,what:"Petites pâtes en sauce rouge, plat mozabite.",where:"Cuisine familiale, maisons d'hôtes.",tip:"Rassurant pour les enfants qui aiment les pâtes."},
+ {name:"Maghlouga",kids:3,what:"Galette farcie, spécialité mozabite.",where:"Maisons d'hôtes, parfois en encas.",tip:"Pratique à partager."},
+ {name:"Takerwait",kids:1,what:"Infusion aux herbes, boisson traditionnelle mozabite.",where:"Chez l'habitant.",tip:"À goûter une fois pour la découverte."},
+ {name:"Dattes fraîches",kids:3,what:"Fin octobre, c'est la saison. La Deglet Nour, « datte de lumière », est dorée et translucide. La Ghars est molle et très sucrée.",where:"Au marché de Ghardaïa, ou offertes avec le thé.",tip:"Goûtez-les fraîches : rien à voir avec les dattes sèches."},
+ {name:"Thé à la menthe",kids:2,what:"Très sucré, servi en petits verres, souvent offert à l'arrivée.",where:"Partout, et dans les dunes si le guide le prépare.",tip:"Accepter un thé est une politesse. Un seul verre suffit."},
+ {name:"Chorba",kids:2,what:"Soupe à la tomate, à la viande et au blé concassé, parfumée à la coriandre.",where:"En entrée dans la plupart des restaurants.",tip:"Un bon réconfort si le dîner arrive tard."},
+ {name:"Mhadjeb",kids:3,what:"Crêpe feuilletée pliée en carré, farcie d'une sauce tomate aux oignons.",where:"Petites échoppes.",tip:"Parfait comme encas entre deux visites."},
+ {name:"Grillades",kids:3,what:"Brochettes et côtelettes d'agneau grillées au charbon.",where:"Grillades le soir.",tip:"La valeur sûre avec les enfants."},
+];
+
+const BUY = [
+ {name:"Tapis de Ghardaïa",how:"Laine et poil de chèvre, tissage fin à motifs géométriques, dominé par le rouge, le noir et l'ocre. Retournez-le : sur un tapis fait main, le dos est aussi net que le dessus.",price:"Le gros achat du séjour : comparez deux ou trois boutiques sous les arcades avant de décider.",note:"Ghardaïa accueille chaque printemps, en mars, la fête nationale du tapis, organisée depuis plus d'un demi-siècle."},
+ {name:"Vannerie en palme",how:"Paniers, éventails, plateaux tressés en feuille de palmier. Vérifiez que le tressage est serré.",price:"Petits prix, cadeaux légers dans la valise.",note:"L'artisanat direct de la palmeraie."},
+ {name:"Poterie",how:"Jarres et plats en terre, vendus avec les tapis sous les arcades. Choisissez des pièces sans fêlure.",price:"Abordable, mais fragile.",note:"Préférez les petites pièces pour l'avion."},
+ {name:"Bijoux en argent",how:"Bracelets, fibules, colliers. Demandez s'ils sont en argent massif ou en métal argenté.",price:"Le prix dépend du poids et du travail.",note:"Négociez, en respectant le travail de l'artisan."},
+ {name:"Dattes en boîte",how:"Dattes de la récolte, en boîte ou en branche.",price:"Le meilleur rapport plaisir-prix du séjour.",note:"À acheter le 27 au matin, pour qu'elles restent fraîches."},
+ {name:"Épices et herbes",how:"Menthe séchée, mélanges pour la chorba, piment.",price:"Petits prix au marché.",note:"Demandez un sachet bien fermé pour la valise."},
+];
+const BUY_TIPS = ["Comparez deux ou trois boutiques avant le gros achat.","Négociez avec le sourire : un accord doit faire plaisir aux deux.","Payez en dinars, en espèces : la carte est rarement acceptée.","Ne rapportez aucun objet ancien ou d'apparence archéologique.","Gardez les tapis roulés, pas pliés, pour l'avion."];
+
+const MANNERS = [
+ ["Saluer","On dit « Salam alikoum », on répond « Alikoum salam ». Une main sur le cœur après une poignée de main est un geste de respect."],
+ ["La main droite","On mange, on donne et on reçoit de la main droite."],
+ ["Le thé","Accepter le thé offert est une politesse. On peut se limiter à un verre."],
+ ["Les photos","Jamais de photo des personnes sans leur accord, et jamais à Béni Isguen. Pour les lieux, demandez au guide."],
+ ["La tenue","Épaules et jambes couvertes dans les ksour, pour les adultes comme pour les grands enfants."],
+ ["Fumer","Interdit dans les rues de Béni Isguen."],
+ ["Les mosquées","On ne les visite pas. Pendant l'appel à la prière, baissez la voix près des mosquées."],
+ ["Chez l'habitant","Retirez les chaussures si les hôtes le font. Complimentez le repas."],
+ ["Le pourboire","Prévoyez un pourboire pour le guide et le chauffeur en fin de journée. Demandez à votre hôte le montant habituel."],
+];
+
+const ACCESS = "Pour Béni Isguen, un guide local du ksar est obligatoire. Pour les autres ksour, il est fortement recommandé. Chaque ksar a ses propres guides : même avec un chauffeur, et parfois même avec votre guide, un guide du ksar peut vous être imposé à l'entrée. Les sources consultées ne donnent aucun tarif d'entrée : demandez à votre guide si son prix inclut ces guides locaux et d'éventuels droits d'entrée, et prévoyez des petites coupures en dinars.";
+
+const GLOSS = [
+ ["Ksar (ksour)","Ville fortifiée sur une colline. Le M'Zab en compte cinq historiques."],
+ ["Pentapole","Les cinq ksour : El Atteuf, Bounoura, Melika, Ghardaïa, Béni Isguen, fondés entre 1012 et 1350."],
+ ["Ibadites","Branche minoritaire de l'islam, venue de Tahert (Tiaret) après la chute des Rostémides."],
+ ["Rahba","L'ancien marché, à l'intérieur du ksar de Ghardaïa."],
+ ["Skifa","Entrée en chicane d'une maison : on ne voit pas l'intérieur depuis la rue."],
+ ["Azzaba","Conseil religieux qui encadre la vie de la communauté, et le marché de Béni Isguen."],
+ ["Boulila","La tour qui marque le point le plus haut de Béni Isguen."],
+ ["Oumana El-Sayl","« Les gardiens des crues » : l'association qui gère les ouvrages de l'eau."],
+ ["Tissembades","Canalisations en grandes pierres plates qui cassent la vitesse de l'eau."],
+ ["Séguia","Canal d'irrigation à ciel ouvert."],
+ ["Touiza","Entraide : chacun travaille pour la communauté. Base de la charte de Tafilalt."],
+ ["Asr","Prière de l'après-midi. Le marché à la criée de Béni Isguen commence après."],
+ ["Maghreb","Prière du coucher du soleil."],
+ ["Oued","Cours d'eau à sec la plupart du temps, en crue de temps en temps."],
+ ["Deglet Nour","« Datte de lumière » : variété dorée et translucide."],
+];
+
+const PHRASES = [
+ ["Bonjour","Salam alikoum"],["Réponse au bonjour","Alikoum salam"],["Merci","Saha / Choukrane"],
+ ["Combien ?","Bechhal ?"],["C'est très beau","Mlih bezzaf"],["C'est délicieux","Bnin bezzaf"],["Oui / Non","Ih / La"],["Au revoir","Bslama"],
+];
+
+const BINGO = [
+ ["🚪","Une porte bleue"],["🕌","Un minaret pointu"],["🌴","Un palmier chargé de dattes"],
+ ["💧","Un canal d'eau"],["🐐","Une chèvre"],["🧺","Un panier en palme"],
+ ["🫖","Un verre de thé"],["🏜️","Une dune plus haute que papa"],["🌕","La pleine lune"],
+];
+
+const QUIZ = [
+ {q:"Combien de ksour historiques compte la vallée du M'Zab ?",o:["Trois","Cinq","Douze"],a:1,f:"Cinq : la pentapole."},
+ {q:"D'où vient le nom de Ghardaïa ?",o:["D'une grotte, Ghar Daïa","D'un roi","D'un palmier"],a:0,f:"Selon la légende, de la grotte de Daïa, une jeune femme."},
+ {q:"Pourquoi les ruelles tournent-elles sans arrêt ?",o:["Pour se perdre","Contre le vent, le soleil et les assaillants","Pour les ânes"],a:1,f:"Elles cassent le vent de sable, gardent l'ombre et gênent un attaquant."},
+ {q:"Comment se calcule l'eau donnée à chaque jardin ?",o:["Au hasard","Selon la surface et le nombre de palmiers","Selon la couleur de la porte"],a:1,f:"Plus un jardin est grand et a de palmiers, plus il reçoit d'eau."},
+ {q:"Quelle est la plus ancienne ville de la vallée ?",o:["Ghardaïa","El Atteuf","Tafilalt"],a:1,f:"El Atteuf, fondée en 1012."},
+ {q:"Quel architecte célèbre s'est inspiré de Sidi Brahim ?",o:["Le Corbusier","Gustave Eiffel","Picasso"],a:0,f:"Le Corbusier, pour sa chapelle de Ronchamp."},
+ {q:"Combien d'arbres chaque habitant de Tafilalt doit-il entretenir ?",o:["Un","Trois","Dix"],a:1,f:"Trois : un palmier, un arbre d'ornement et un arbre fruitier."},
+ {q:"Que doit-on éviter absolument à Béni Isguen ?",o:["Marcher","Photographier les habitants","Parler doucement"],a:1,f:"Aucune photo des habitants, et on ne fume pas dans les rues."},
+ {q:"Que veut dire « Deglet Nour » ?",o:["Datte de lumière","Datte du roi","Datte du désert"],a:0,f:"Datte de lumière, à cause de sa couleur dorée et translucide."},
+ {q:"Qu'est-ce qui se lève à l'est quand le soleil se couche le 26 ?",o:["Une étoile filante","La pleine lune","Un avion"],a:1,f:"La pleine lune se lève quand le soleil se couche."},
+];
+
+const SOURCES = [
+ ["UNESCO, Vallée du M'Zab (fiche du patrimoine mondial)","https://whc.unesco.org/fr/list/188/"],
+ ["UNESCO, techniques de construction traditionnelles du M'Zab","https://whc.unesco.org/fr/canopee/mzab/"],
+ ["Wikipédia, Ghardaïa","https://fr.wikipedia.org/wiki/Ghardaïa"],
+ ["Wikipédia, Beni Isguen","https://fr.wikipedia.org/wiki/Beni_Isguen"],
+ ["Wikipédia, El Atteuf","https://fr.wikipedia.org/wiki/El_Atteuf"],
+ ["Wikipédia, Ksar Tafilelt","https://fr.wikipedia.org/wiki/Ksar_Tafilelt"],
+ ["DK News, le système traditionnel de captage des eaux","https://www.dknews-dz.com/article/97609-ghardaia-le-systeme-traditionnel-ingenieux-de-captage-des-eaux-en-peril.html"],
+ ["Algérie 360, Le Corbusier et le M'Zab","https://www.algerie360.com/le-corbusier-et-le-mzab-une-histoire-damour-et-darchitecture"],
+ ["Routard, Ghardaïa","https://www.routard.com/fr/guide/afrique/algerie/hauts-plateaux-et-atlas-saharien/ghardaia-et-ses-environs/ghardaia"],
+ ["Ziguade Travel, que faire à Ghardaïa (spécialités, Sebseb)","https://ziguadetravel.com/que-faire-ghardaia/"],
+];
+
+const BAG = ["Tenue couverte pour les ksour (épaules, jambes)","Eau et chapeaux","Crème solaire et lunettes","Lampe de poche pour les dunes","Petite laine pour le soir","Espèces en dinars (guide, taxis, achats)","Sac pour les achats","Téléphone chargé"];
+
+
+/* ===================== ENCADRÉS, PHOTOS, BALADES, DOSSIERS ===================== */
+const BOXES = {
+ "Ksar de Ghardaïa et son marché":{coeur:"La montée vers le minaret : à chaque virage, la ville se resserre et la lumière change.",bonplan:"Arrivez tôt : le marché est plus animé le matin, et la montée se fait à la fraîche.",attention:"Le vendredi, beaucoup de boutiques ferment. Au marché, la qualité des tapis varie beaucoup : prenez votre temps.",enfants:"Ils aimeront le labyrinthe des ruelles. Fixez un point de rendez-vous en cas de séparation."},
+ "Ksar de Béni Isguen":{coeur:"La vue depuis la tour Boulila, le point le plus haut de la ville.",bonplan:"Restez près du guide dans les ruelles : il vous indiquera les rares endroits où photographier l'architecture.",attention:"Aucune photo des habitants, tenue couverte, pas de cigarette. Ces règles sont strictes.",enfants:"Expliquez-leur avant d'entrer qu'on parle doucement : le jeu du silence aide beaucoup."},
+ "Marché à la criée de Béni Isguen":{coeur:"Le crieur qui fait le tour de la place, et les enchères qui montent d'un simple geste.",bonplan:"Placez-vous en bordure de la place, sans gêner, pour tout voir.",attention:"Pas de marché le vendredi. L'heure exacte varie : faites-la confirmer le jour même.",enfants:"Faites-leur deviner le prix final d'un objet avant la fin de l'enchère."},
+ "Palmeraie, partage de l'eau, coucher de soleil":{coeur:"Les canaux qui se divisent entre les jardins : on comprend tout le M'Zab en un regard.",bonplan:"Gardez la dernière demi-heure pour le coucher du soleil sous les palmiers.",attention:"Les jardins sont privés : on n'y entre qu'invité ou avec le guide.",enfants:"Ils peuvent suivre le chemin de l'eau, du canal jusqu'au pied d'un palmier."},
+ "Ksar d'El Atteuf":{coeur:"Les arcades inégales du mausolée de Sidi Brahim, blanches et comme modelées à la main.",bonplan:"Venez tôt : la lumière du matin souligne les volumes blancs.",attention:"C'est un lieu religieux : tenue couverte, voix basse, photos seulement si le guide l'autorise.",enfants:"Le défi « deux arcades identiques » les occupe tout le long de la visite."},
+ "Ksar de Tafilalt":{coeur:"Voir une ville neuve vivre selon des règles d'il y a mille ans.",bonplan:"Demandez au guide de vous montrer un îlot et ses arbres entretenus par les familles.",attention:"C'est un quartier habité : pas de photos des habitants, discrétion devant les maisons.",enfants:"Compter les palmiers devant les maisons, et comprendre pourquoi chaque famille en a un."},
+ "Sebseb":{coeur:"Le contraste avec la palmeraie de la veille.",bonplan:"Profitez de cette étape pour boire et vous couvrir avant les dunes.",attention:"Les informations sur Sebseb sont rares : fiez-vous à votre guide.",enfants:"Leur demander ce qui est pareil et différent par rapport à hier."},
+ "Dunes de Mansoura":{coeur:"La pleine lune qui se lève à l'est pendant que le soleil se couche à l'ouest.",bonplan:"Arrivez au moins 45 minutes avant le coucher du soleil pour monter sans courir.",attention:"Le sable reste chaud en fin d'après-midi et la nuit tombe vite : lampe et petite laine.",enfants:"Le meilleur moment du séjour pour eux : courses, glissades, roulades."},
+};
+
+const IMG = (file,w=900)=>`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${w}`;
+const PHOTOS = {
+ "Ksar de Ghardaïa et son marché":[
+  {f:"Ksar Ghardaia place marché 1.jpg",cap:"La place du marché de Ghardaïa",by:"Camille Gillet",lic:"CC BY-SA 4.0"},
+  {f:"Vue Ghardaia Melika.jpg",cap:"Ghardaïa, vue depuis Melika",by:"Camille Gillet",lic:"CC BY-SA 4.0"}],
+ "Ksar de Béni Isguen":[
+  {f:"Ksar de Beni Isguen.jpg",cap:"Le ksar de Béni Isguen",by:"Bernard Gagnon",lic:"CC BY 4.0"},
+  {f:"Rue Ksar Beni Isguen.jpg",cap:"Une ruelle de Béni Isguen",by:"Camille Gillet",lic:"CC BY-SA 4.0"},
+  {f:"Remparts au crepuscole.JPG",cap:"Les remparts au crépuscule",by:"Gigi Sorrentino",lic:"CC BY-SA 3.0"}],
+ "Marché à la criée de Béni Isguen":[
+  {f:"Marché Lalla Achou 01.jpg",cap:"Le marché Lalla Achou",by:"Bernard Gagnon",lic:"CC BY 4.0"},
+  {f:"Place Lala Achou. Marché de Beni Isguen - Ghardaia - Algérie.JPG",cap:"La place Lalla Achou",by:"Aziza Ines",lic:"CC BY-SA 3.0"}],
+ "Palmeraie, partage de l'eau, coucher de soleil":[
+  {f:"Palmeraie Beni Isguen.jpg",cap:"La palmeraie de Béni Isguen",by:"Camille Gillet",lic:"CC BY-SA 4.0"},
+  {f:"Béni Isguen, le barrage.jpg",cap:"Le barrage de Béni Isguen",by:"Michel-Georges Bernard",lic:"CC BY-SA 3.0"},
+  {f:"Béni Isguen, maison de la palmeraie.jpg",cap:"Une maison de la palmeraie",by:"Michel-Georges Bernard",lic:"CC BY-SA 3.0"}],
+ "Ksar d'El Atteuf":[
+  {f:"Mausoleum of Cheikh Sidi Brahim 01.jpg",cap:"Le mausolée de Sidi Brahim",by:"Bernard Gagnon",lic:"CC BY 4.0"},
+  {f:"Ksar El Atteuf 01.jpg",cap:"Le ksar d'El Atteuf",by:"Bernard Gagnon",lic:"CC BY 4.0"},
+  {f:"El-Atteuf Ghardaia Algeria.jpg",cap:"El Atteuf",by:"Stefan Krasowski",lic:"CC BY 2.0"}],
+ "Sebseb":[
+  {f:"Commune de Sebseb بلدية سبسب تشكركم - panoramio.jpg",cap:"Sebseb",by:"habib kaki",lic:"CC BY 3.0"}],
+};
+const PHOTOS_ON = /github\.io$/.test(location.hostname) || location.protocol==="file:" || location.hostname==="localhost";
+
+const WALKS = [
+ {id:"w-ghardaia",name:"Balade dans le ksar de Ghardaïa",when:"Dim. 25, 9h00 · environ 2 h",pts:[
+  {n:"La place du marché",t:"Point de départ. Une grande place rectangulaire d'environ 3 400 m², entourée d'arcades, aménagée vers 1884. Sous les arcades, tapis et poteries."},
+  {n:"La Rahba, l'ancien marché",t:"Plus haut, à l'intérieur du ksar, l'ancien marché de la ville, bien plus petit que la place actuelle."},
+  {n:"Les ruelles et les skifa",t:"Les rues tournent sans cesse. Observez les entrées des maisons : la skifa, en chicane, empêche de voir l'intérieur depuis la rue."},
+  {n:"La grande mosquée",t:"Au sommet, la grande mosquée et son minaret en forme de pyramide très allongée. Elle servait de dernier refuge en cas de siège, avec arsenal et silo à grains. On la regarde de l'extérieur."},
+  {n:"La vue sur la vallée",t:"Depuis le haut, repérez Melika sur la colline d'en face. Au XIXe siècle, c'était elle la ville sainte du M'Zab."}]},
+ {id:"w-beniisguen",name:"Balade dans le ksar de Béni Isguen",when:"Dim. 25, 11h15 · environ 1 h 45, guide local obligatoire",pts:[
+  {n:"La porte en troncs de palmier",t:"On entre par une lourde porte faite de troncs de palmier. Au XIXe siècle, toutes les portes des deux enceintes étaient fermées la nuit."},
+  {n:"Les ruelles silencieuses",t:"Silence, propreté, aucune cigarette. Ici, on ne photographie jamais les habitants."},
+  {n:"La place Lalla Achou",t:"La place du marché, en bordure du ksar. Le marché à la criée s'y tient tous les jours sauf le vendredi, sous le contrôle des azzaba."},
+  {n:"Les remparts",t:"L'enceinte de Béni Isguen est l'une des mieux préservées de la vallée, ponctuée de tours de guet."},
+  {n:"La tour Boulila",t:"Le point culminant de la ville. La vue embrasse le ksar, les remparts et la palmeraie. Pour les photos, suivez les indications du guide."}]},
+];
+
+const HISTORY = [
+ ["909","Chute du royaume rostémide de Tahert (Tiaret). Des Ibadites se réfugient à Sedrata, près d'Ouargla."],
+ ["1012","Fondation d'El Atteuf, la doyenne des villes du M'Zab."],
+ ["1048 ou 1053","Fondation de Ghardaïa, selon les sources."],
+ ["1012–1350","Fondation des cinq ksour de la pentapole, selon l'UNESCO. La date de Béni Isguen varie selon les sources."],
+ ["XVe siècle","Le mausolée de Sidi Brahim, à El Atteuf."],
+ ["Vers 1884","Aménagement de la grande place du marché de Ghardaïa."],
+ ["1908","Naissance à Béni Isguen de Moufdi Zakaria, auteur de l'hymne national algérien."],
+ ["1931 et 1933","Le Corbusier découvre le M'Zab, puis y revient."],
+ ["1955","Chapelle de Ronchamp, que l'on rapproche de Sidi Brahim."],
+ ["1970","Création de l'atelier qui deviendra l'Office de protection et de promotion de la vallée du M'Zab (OPVM)."],
+ ["1982","Inscription de la vallée au patrimoine mondial de l'UNESCO."],
+ ["1997","Ahmed Nouh crée la fondation Amidoul, à l'origine de Tafilalt."],
+ ["2004","Inauguration du ksar de Tafilalt."],
+ ["2005","La vallée devient secteur sauvegardé."],
+ ["1er octobre 2008","Une crue terrible emporte une partie des ouvrages hydrauliques."],
+];
+
+const SOCIETY = [
+ ["La langue","Le mozabite, ou tumzabt, est une langue berbère zénète, parlée par plus de 150 000 personnes en 2010. La plupart des hommes parlent aussi l'arabe dialectal."],
+ ["La religion","Les Mozabites suivent l'ibadisme, un courant rigoriste et minoritaire de l'islam. La tradition condamne le luxe et réprouve le tabac et l'alcool."],
+ ["Les azzaba","Le conseil des sages prend les décisions selon des règles. Il existe deux assemblées, l'une pour les questions religieuses, l'autre pour les questions politiques. Leurs décisions prennent la forme de conventions, les iffiqat."],
+ ["Les fractions","Chaque fraction, ou grande famille, a son conseil, sa maison d'assemblée, son quartier, son cimetière et son ancêtre."],
+ ["Le commerce","Au début du XXe siècle, le commerce devient l'activité principale des Mozabites, présents à Alger, Tunis, Constantine et ailleurs. Sous les Ottomans, ils géraient à Alger les bains publics, les boucheries et les moulins."],
+ ["L'égalité","Les maisons, des cubes de taille semblable, traduisent une société égalitaire qui protège l'intimité des familles."],
+];
+
+const PRACTICAL = [
+ {h:"Climat fin octobre",items:["Environ 27 °C le jour et 15 °C la nuit en moyenne.","Environ 9 heures de soleil par jour, très peu de pluie.","Indice UV élevé : chapeau, lunettes, crème solaire.","Soirées fraîches, surtout dans les dunes : prévoyez une petite laine."]},
+ {h:"Argent",items:["La monnaie est le dinar algérien (DZD). Tout se paie en espèces.","Les cartes ne sont acceptées que dans les grands hôtels. Les distributeurs pour cartes étrangères sont rares et peu fiables.","Changez seulement en banque ou en bureau agréé : le marché noir est illégal. Gardez tous les reçus avec votre déclaration de devises.","Les dinars ne peuvent pas sortir du pays : dépensez-les avant le départ."]},
+ {h:"Se déplacer",items:["Pas de visite des ksour en voiture : tout se fait à pied, avec un guide.","Taxis : fixez le prix avant de monter, attente comprise.","Aéroport de Noumérat : environ 20 km de Ghardaïa.","Demandez à votre hôte de réserver les taxis : c'est plus simple et plus sûr."]},
+ {h:"Santé et sécurité",items:["Eau en bouteille capsulée uniquement.","Buvez souvent, même sans soif : l'air est très sec.","Des pénuries d'eau peuvent survenir d'avril à octobre : économisez l'eau à votre hébergement.","Évitez les rassemblements et manifestations."]},
+ {h:"Horaires et vendredi",items:["Le vendredi est le jour de la grande prière : beaucoup de commerces ferment, et le marché à la criée de Béni Isguen n'a pas lieu.","Pendant les prières, certaines boutiques ferment quelques minutes.","Les visites se font plutôt le matin et en fin d'après-midi, à cause de la chaleur."]},
+];
+const EMERGENCY = [["Police","17"],["Pompiers et protection civile","14"],["Numéro vert de la police (DGSN)","1548"],["Gendarmerie nationale","1055"]];
+
+const BOOKS = [
+ {t:"Le M'Zab, une leçon d'architecture",a:"André Ravéreau, photographies de Manuelle Roche",e:"Sindbad, 1981 · réédition Parenthèses, 2024",d:"La référence sur l'architecture de la vallée et ses leçons de sobriété et d'adaptation au climat."},
+ {t:"Fiche UNESCO de la vallée du M'Zab",a:"Centre du patrimoine mondial",e:"whc.unesco.org",d:"La description officielle du site, de ses cinq ksour et de leur organisation."},
+];
+
+const HOST_FIELDS = [["resto","Restaurant conseillé"],["cafe","Café ou salon de thé"],["tapis","Boutique de tapis"],["dattes","Où acheter les dattes"],["autre","Autre conseil de l'hôte"]];
+
+/* Schémas dessinés */
+const SVG_HOUSE = `<svg viewBox="0 0 560 340" role="img" aria-label="Coupe simplifiée d'une maison mozabite">
+ <rect x="0" y="0" width="560" height="340" fill="var(--surface)"/>
+ <rect x="60" y="80" width="440" height="220" fill="var(--ochre-soft)" stroke="var(--ochre)" stroke-width="2"/>
+ <rect x="60" y="50" width="440" height="30" fill="none" stroke="var(--ochre)" stroke-width="2" stroke-dasharray="6 5"/>
+ <text x="280" y="70" text-anchor="middle" font-size="16" fill="var(--fg)">Terrasse : on y dort l'été, on y fait sécher</text>
+ <rect x="210" y="80" width="140" height="220" fill="var(--bg)" stroke="var(--ochre)" stroke-width="2"/>
+ <text x="280" y="170" text-anchor="middle" font-size="18" fill="var(--fg)" font-weight="700">Patio</text>
+ <text x="280" y="192" text-anchor="middle" font-size="14" fill="var(--muted)">lumière et air</text>
+ <text x="280" y="210" text-anchor="middle" font-size="14" fill="var(--muted)">par une ouverture</text>
+ <path d="M280 80 L280 60" stroke="var(--door)" stroke-width="3" marker-end="url(#ar)"/>
+ <text x="135" y="190" text-anchor="middle" font-size="15" fill="var(--fg)">Pièces</text>
+ <text x="425" y="190" text-anchor="middle" font-size="15" fill="var(--fg)">Pièces</text>
+ <path d="M10 285 L60 285 L60 255 L110 255 L110 285 L210 285" fill="none" stroke="var(--door)" stroke-width="4"/>
+ <text x="85" y="245" text-anchor="middle" font-size="15" fill="var(--door)" font-weight="700">Skifa</text>
+ <text x="85" y="325" text-anchor="middle" font-size="13" fill="var(--muted)">entrée en chicane</text>
+ <text x="12" y="275" font-size="13" fill="var(--muted)">Rue</text>
+ <line x1="380" y1="290" x2="470" y2="100" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 4"/>
+ <text x="478" y="125" font-size="13" fill="var(--muted)">escalier</text>
+ <defs><marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--door)"/></marker></defs>
+</svg>`;
+const SVG_KSAR = `<svg viewBox="0 0 560 380" role="img" aria-label="Plan type d'un ksar du M'Zab">
+ <rect width="560" height="380" fill="var(--surface)"/>
+ <ellipse cx="280" cy="300" rx="260" ry="62" fill="var(--palm-soft)"/>
+ <text x="280" y="352" text-anchor="middle" font-size="15" fill="var(--palm)">Palmeraie et maisons d'été, à l'écart</text>
+ <circle cx="280" cy="170" r="125" fill="var(--ochre-soft)" stroke="var(--ochre)" stroke-width="4"/>
+ <circle cx="280" cy="170" r="88" fill="none" stroke="var(--ochre)" stroke-width="1.5" stroke-dasharray="4 5"/>
+ <circle cx="280" cy="170" r="50" fill="none" stroke="var(--ochre)" stroke-width="1.5" stroke-dasharray="4 5"/>
+ <rect x="262" y="148" width="36" height="30" fill="var(--bg)" stroke="var(--fg)" stroke-width="1.5"/>
+ <path d="M274 148 L278 108 L282 108 L286 148 Z" fill="var(--fg)"/>
+ <text x="300" y="120" font-size="14" fill="var(--fg)">Mosquée et minaret</text>
+ <text x="300" y="137" font-size="12" fill="var(--muted)">tour de guet, dernier refuge</text>
+ <text x="280" y="232" text-anchor="middle" font-size="13" fill="var(--fg)">Maisons en cercles</text>
+ <text x="280" y="268" text-anchor="middle" font-size="13" fill="var(--ochre)">Rempart</text>
+ <rect x="390" y="235" width="70" height="34" rx="4" fill="var(--door-soft)" stroke="var(--door)"/>
+ <text x="425" y="257" text-anchor="middle" font-size="13" fill="var(--fg)">Marché</text>
+ <text x="470" y="225" font-size="12" fill="var(--muted)">en bordure</text>
+ <g fill="var(--muted)"><circle cx="70" cy="120" r="4"/><circle cx="85" cy="135" r="4"/><circle cx="62" cy="145" r="4"/><circle cx="90" cy="110" r="4"/></g>
+ <text x="45" y="95" font-size="13" fill="var(--muted)">Cimetière</text>
+</svg>`;
+const SVG_WATER = `<svg viewBox="0 0 600 260" role="img" aria-label="Le chemin de l'eau, de la crue aux jardins">
+ <rect width="600" height="260" fill="var(--surface)"/>
+ <g font-size="14" fill="var(--fg)" text-anchor="middle">
+ ${[["Crue de l'oued","pluie lointaine",60],["Barrage","retient l'eau",180],["Infiltration","nappe sous l'oued",300],["Puits et canaux","tissembades, séguias",420],["Jardins","part selon la surface et les palmiers",540]].map(([a,b,x],i)=>`<g><circle cx="${x}" cy="90" r="38" fill="${i===4?'var(--palm-soft)':'var(--door-soft)'}" stroke="${i===4?'var(--palm)':'var(--door)'}" stroke-width="2"/><text x="${x}" y="96" font-weight="700" font-size="22" fill="${i===4?'var(--palm)':'var(--door)'}">${i+1}</text><text x="${x}" y="152" font-weight="700">${a}</text><foreignObject x="${x-58}" y="160" width="116" height="60"><div xmlns="http://www.w3.org/1999/xhtml" style="font:13px/1.25 system-ui,sans-serif;color:var(--muted);text-align:center">${b}</div></foreignObject>${i<4?`<path d="M${x+42} 90 L${x+76} 90" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar2)"/>`:""}</g>`).join("")}
+ </g>
+ <text x="300" y="30" text-anchor="middle" font-size="14" fill="var(--muted)">Les ouvrages sont gérés par les Oumana El-Sayl, « les gardiens des crues »</text>
+ <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+</svg>`;
+
+/* ===================== ASTRONOMIE ===================== */
+const LAT=32.49, LNG=3.67, TZ=1, R=Math.PI/180;
+function jdOf(y,m,d){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5}
+function sunPos(jd){const D=jd-2451545;const g=(357.529+0.98560028*D)%360,q=(280.459+0.98564736*D)%360;const L=q+1.915*Math.sin(g*R)+0.02*Math.sin(2*g*R),e=23.439-3.6e-7*D;
+ let RA=Math.atan2(Math.cos(e*R)*Math.sin(L*R),Math.cos(L*R))/R/15;RA=((RA%24)+24)%24;const decl=Math.asin(Math.sin(e*R)*Math.sin(L*R))/R;let eqt=q/15-RA;eqt=((eqt+12)%24+24)%24-12;return{decl,eqt}}
+function dayTimes(iso){const [y,m,d]=iso.split("-").map(Number);const {decl,eqt}=sunPos(jdOf(y,m,d)+0.5-TZ/24);const noon=12+TZ-LNG/15-eqt;
+ const c=a=>Math.acos((Math.sin(a*R)-Math.sin(decl*R)*Math.sin(LAT*R))/(Math.cos(decl*R)*Math.cos(LAT*R)))/R/15;
+ const asrA=Math.atan(1/(1+Math.tan(Math.abs(LAT-decl)*R)))/R;
+ return {fajr:noon-c(-18),sunrise:noon-c(-0.833),dhuhr:noon,asr:noon+c(asrA),maghrib:noon+c(-0.833),isha:noon+c(-17)}}
+const hm=h=>{const m=Math.round(h*60);return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+const toMin=s=>{const [a,b]=s.split(":").map(Number);return a*60+b};
+function moonAge(iso){const [y,m,d]=iso.split("-").map(Number);return ((jdOf(y,m,d)+0.75-2451550.1)%29.530588+29.530588)%29.530588}
+const PRAYERS=[["fajr","Fajr","Aube"],["sunrise","Lever du soleil",""],["dhuhr","Dhuhr","Midi"],["asr","Asr","Après-midi"],["maghrib","Maghreb","Coucher du soleil"],["isha","Isha","Nuit"]];
+
+/* ===================== OUTILS ===================== */
+const S={get(k,d){try{const v=localStorage.getItem("gh."+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("gh."+k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const stars=n=>`<span class="stars" aria-label="${n} sur 3">${"★".repeat(n)}${"☆".repeat(3-n)}</span>`;
+function algiersNow(){const p=new Intl.DateTimeFormat("fr-CA",{timeZone:"Africa/Algiers",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+ const g=t=>p.find(x=>x.type===t).value;return{date:`${g("year")}-${g("month")}-${g("day")}`,hm:`${g("hour")}:${g("minute")}`.replace(/^24/,"00")}}
+function currentStop(day,t){let cur=null;day.stops.forEach((s,i)=>{if(s.t<=t)cur=i});return cur}
+
+/* ===================== AUDIO ===================== */
+const synth=window.speechSynthesis;let voice=null,queue=[],qi=0,paused=false;
+function pickVoice(){if(!synth)return;const v=synth.getVoices();voice=v.find(x=>/^fr(-|_)FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null}
+if(synth){pickVoice();synth.onvoiceschanged=pickVoice}
+const player=document.getElementById("player"),plbl=document.getElementById("plbl"),ppause=document.getElementById("ppause");
+function speakList(items){if(!synth){note("La lecture audio n'est pas disponible sur cet appareil.");return}synth.cancel();queue=items;qi=0;paused=false;ppause.textContent="Pause";nextUtt()}
+function nextUtt(){if(qi>=queue.length){player.hidden=true;return}const it=queue[qi];player.hidden=false;plbl.textContent="Lecture : "+it.label;
+ const u=new SpeechSynthesisUtterance(it.text);u.lang="fr-FR";if(voice)u.voice=voice;u.rate=it.kid?1:0.95;u.pitch=it.kid?1.1:1;u.onend=()=>{qi++;nextUtt()};u.onerror=()=>{player.hidden=true};synth.speak(u)}
+ppause.onclick=()=>{if(!synth)return;if(paused){synth.resume();paused=false;ppause.textContent="Pause"}else{synth.pause();paused=true;ppause.textContent="Reprendre"}};
+document.getElementById("pstop").onclick=()=>{synth&&synth.cancel();queue=[];player.hidden=true};
+function note(m){plbl.textContent=m;player.hidden=false;setTimeout(()=>{if(!queue.length||qi>=queue.length)player.hidden=true},3500)}
+
+/* ===================== NAVIGATION ===================== */
+const view=document.getElementById("view"),tabs=document.getElementById("tabs");
+const TABS=[...DAYS.map(d=>({id:d.id,label:d.tab})),{id:"guide",label:"Guide"},{id:"prieres",label:"Prières"},{id:"enfants",label:"Enfants"},{id:"pratique",label:"Pratique"}];
+const GUIDE=[
+ {id:"mzab",label:"Comprendre le M'Zab",hint:"Introduction, mots à connaître"},
+ {id:"incontournables",label:"Les incontournables",hint:"Notes, durées, le saviez-vous"},
+ {id:"balades",label:"Balades à pied",hint:"Ghardaïa et Béni Isguen, point par point"},
+ {id:"comprendre",label:"Comprendre",hint:"Histoire, Mozabites, architecture, eau"},
+ {id:"carte",label:"Carte de la vallée",hint:"Les ksour, la palmeraie, l'aéroport"},
+ {id:"manger",label:"Que manger",hint:"Plats, dattes, avis des enfants"},
+ {id:"acheter",label:"Qu'acheter",hint:"Tapis, vannerie, dattes, conseils"},
+ {id:"savoirvivre",label:"Savoir-vivre",hint:"Saluer, photos, thé, pourboire"},
+ {id:"ciel",label:"Le ciel des dunes",hint:"Pleine lune, Saturne, étoiles"},
+ {id:"infos",label:"Infos pratiques",hint:"Climat, argent, santé, urgences"},
+ {id:"adresses",label:"Adresses",hint:"Les conseils de votre hôte"},
+ {id:"lire",label:"Pour aller plus loin",hint:"Livre et références"},
+ {id:"sources",label:"Sources",hint:"D'où viennent les informations"},
+];
+function renderTabs(active){const top=(GUIDE.some(g=>g.id===active)||/^w-/.test(active))?"guide":active;
+ tabs.innerHTML=TABS.map(t=>`<button role="tab" type="button" id="tab-${t.id}" aria-selected="${t.id===top}" data-t="${t.id}">${esc(t.label)}</button>`).join("");
+ tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>show(b.dataset.t))}
+const backBtn=()=>`<button class="btn back" type="button" data-go="guide">← Toutes les rubriques</button>`;
+function wireGo(){view.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go))}
+
+/* ===================== VUES ===================== */
+function photosHTML(name){const ph=PHOTOS[name];if(!ph)return "";
+ if(!PHOTOS_ON)return `<p class="small">📷 ${ph.length} photo${ph.length>1?"s":""} de ce lieu dans l'application installée sur le téléphone.</p>`;
+ return `<div class="photos">${ph.map(p=>`<figure><img loading="lazy" src="${IMG(p.f)}" alt="${esc(p.cap)}" onerror="this.closest('figure').hidden=true"><figcaption>${esc(p.cap)} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(p.f.replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(p.by)}, ${esc(p.lic)}</a></figcaption></figure>`).join("")}</div>`}
+function boxesHTML(name){const b=BOXES[name];if(!b)return "";
+ return `<div class="boxes"><div class="ebox coeur"><b>Notre coup de cœur</b>${esc(b.coeur)}</div><div class="ebox bon"><b>Bon plan</b>${esc(b.bonplan)}</div><div class="ebox att"><b>Attention</b>${esc(b.attention)}</div><div class="ebox enf"><b>Avec des enfants</b>${esc(b.enfants)}</div></div>`}
+function stopHTML(day,s,i,isCur){const key=day.id+"-"+i,done=S.get("done."+key,false);
+ return `<details class="stop${isCur?" current":""}" ${isCur?"open":""} id="s-${key}">
+  <summary><span class="time">${s.t}${s.e?"–"+s.e:""}</span><span class="stitle"><strong>${esc(s.name)}</strong>${s.sub?`<span>${esc(s.sub)}</span>`:""}</span><span class="tag${s.opt?" opt":""}">${esc(s.tag)}</span></summary>
+  <div class="body">
+   <div class="toolbar" style="margin:0"><button class="btn primary" type="button" data-say="${key}">▶ Écouter</button>${s.kid?`<button class="btn kid" type="button" data-kid="${key}">▶ Version enfants</button>`:""}</div>
+   ${photosHTML(s.name)}
+   <p>${esc(s.say)}</p>
+   ${boxesHTML(s.name)}
+   ${s.see?`<div class="k">À voir</div><ul class="list">${s.see.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+   ${s.rules?`<p class="rule"><strong>Règles :</strong> ${esc(s.rules)}</p>`:""}
+   ${s.tip?`<p><strong>Conseil :</strong> ${esc(s.tip)}</p>`:""}
+   ${s.ask?`<div class="box"><strong>À demander au guide :</strong> ${esc(s.ask)}</div>`:""}
+   ${s.kids?`<div class="box kids"><strong>Défi enfants :</strong> ${esc(s.kids)}</div>`:""}
+   <div class="toolbar" style="margin:0">${s.place?`<button class="btn" type="button" data-map="${s.place}">Voir sur la carte</button>`:""}${s.place==="ghardaia"?`<button class="btn" type="button" data-go="w-ghardaia">Balade à pied</button>`:""}${s.name==="Ksar de Béni Isguen"?`<button class="btn" type="button" data-go="w-beniisguen">Balade à pied</button>`:""}</div>
+   <label class="done"><input type="checkbox" id="d-${key}" data-done="${key}" ${done?"checked":""}> Fait</label>
+  </div></details>`}
+
+function renderDay(day){const now=algiersNow(),cur=now.date===day.date?currentStop(day,now.hm):null,pt=dayTimes(day.date);
+ view.innerHTML=`<h2>${esc(day.title)}</h2><p class="daymeta">${esc(day.meta)} · Asr ${hm(pt.asr)} · coucher ${hm(pt.maghrib)}</p>
+  <div class="toolbar"><button class="btn" type="button" id="playday">▶ Toute la journée</button><button class="btn kid" type="button" id="playkid">▶ Journée version enfants</button></div>
+  <div class="stack">${day.stops.map((s,i)=>stopHTML(day,s,i,i===cur)).join("")}</div>`;
+ const find=k=>{const [d,i]=k.split("-");return DAYS.find(x=>x.id===d).stops[+i]};
+ view.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.say);speakList([{label:s.name,text:s.name+". "+s.say}])});
+ view.querySelectorAll("[data-kid]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.kid);speakList([{label:s.name+" (enfants)",text:s.kid,kid:true}])});
+ view.querySelectorAll("[data-map]").forEach(b=>b.onclick=()=>{mapFocus=b.dataset.map;show("carte")});
+ document.getElementById("playday").onclick=()=>speakList(day.stops.map(s=>({label:s.name,text:s.name+". "+s.say})));
+ document.getElementById("playkid").onclick=()=>speakList(day.stops.filter(s=>s.kid).map(s=>({label:s.name+" (enfants)",text:s.kid,kid:true})));
+ view.querySelectorAll("[data-done]").forEach(c=>c.onchange=()=>S.set("done."+c.dataset.done,c.checked));wireGo();
+ if(cur!=null){const el=document.getElementById("s-"+day.id+"-"+cur);el&&setTimeout(()=>el.scrollIntoView({block:"center"}),80)}}
+
+function renderGuide(){view.innerHTML=`<h2>Le guide</h2><p class="daymeta">Tout ce qu'un guide de voyage vous dirait sur Ghardaïa et sa région.</p>
+ <div class="tiles">${GUIDE.map(g=>`<button class="tile" type="button" data-go="${g.id}"><strong>${esc(g.label)}</strong><span>${esc(g.hint)}</span></button>`).join("")}</div>`;wireGo()}
+
+function renderMzab(){view.innerHTML=`${backBtn()}<h2>Comprendre le M'Zab</h2><p class="daymeta">À écouter avant la première visite.</p>
+ <div class="toolbar"><button class="btn primary" type="button" id="pi">▶ Écouter l'introduction</button></div>
+ <div class="card"><p>${esc(INTRO)}</p></div>
+ <h2>Mots à connaître</h2><div class="card"><dl class="gloss">${GLOSS.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
+ <h2>Visiter un ksar : guides et accès</h2><div class="card"><p>${esc(ACCESS)}</p></div>
+ <h2>Les règles du séjour</h2><div class="card"><ul class="list"><li>Guide local obligatoire à Béni Isguen, fortement recommandé ailleurs.</li><li>Tenue couverte : épaules et jambes.</li><li>Aucune photo des habitants, surtout des femmes.</li><li>Ne pas fumer dans les rues de Béni Isguen.</li><li>On n'entre pas dans les mosquées.</li></ul></div>`;
+ document.getElementById("pi").onclick=()=>speakList([{label:"Introduction",text:INTRO}]);wireGo()}
+
+function renderMust(){view.innerHTML=`${backBtn()}<h2>Les incontournables</h2><p class="daymeta">★★★ vaut le voyage · ★★ mérite le détour · ★ intéressant.</p>
+ <div class="stack">${MUST.map((m,i)=>`<article class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap"><h3>${esc(m.name)}</h3>${stars(m.stars)}</div>
+  <div class="meta"><span>⏱ ${esc(m.dur)}</span><span>☀ ${esc(m.best)}</span><span>📅 ${esc(m.day)}</span></div>
+  <p>${esc(m.why)}</p><div class="box know"><strong>Le saviez-vous ?</strong> ${esc(m.know)}</div>
+  <div><button class="btn" type="button" data-m="${i}">▶ Écouter</button></div></article>`).join("")}</div>`;
+ view.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=MUST[+b.dataset.m];speakList([{label:m.name,text:m.name+". "+m.why+" Le saviez-vous ? "+m.know}])});wireGo()}
+
+function renderFood(){view.innerHTML=`${backBtn()}<h2>Que manger</h2><p class="daymeta">Les plats à goûter, avec l'avis probable des enfants. Demandez aussi à votre hôte trois spécialités mozabites de sa famille.</p>
+ <div class="grid2">${FOOD.map((f,i)=>`<article class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><h3>${esc(f.name)}</h3><button class="btn" type="button" data-f="${i}" aria-label="Prononcer ${esc(f.name)}">▶</button></div>
+  <span class="kidrate">Enfants : ${"😋".repeat(f.kids)}${f.kids===1?" à tester":f.kids===3?" valeur sûre":""}</span>
+  <p>${esc(f.what)}</p><p class="small"><strong>Où :</strong> ${esc(f.where)}</p><p class="small"><strong>Conseil :</strong> ${esc(f.tip)}</p></article>`).join("")}</div>
+ <h2>Manger en confiance</h2><div class="card"><ul class="list"><li>Eau en bouteille capsulée, y compris pour les enfants.</li><li>Lavez les dattes et les fruits, ou pelez-les.</li><li>Préférez les plats bien cuits et servis chauds.</li><li>Le soir, les grillades sont simples, rapides et appréciées des enfants.</li></ul></div>`;
+ view.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=FOOD[+b.dataset.f];speakList([{label:f.name,text:f.name+". "+f.what}])});wireGo()}
+
+function renderBuy(){view.innerHTML=`${backBtn()}<h2>Qu'acheter</h2><p class="daymeta">L'artisanat de la vallée, et comment bien acheter.</p>
+ <div class="stack">${BUY.map(b=>`<article class="card"><h3>${esc(b.name)}</h3><p><strong>Reconnaître la qualité :</strong> ${esc(b.how)}</p><p class="small"><strong>Prix :</strong> ${esc(b.price)}</p><div class="box know">${esc(b.note)}</div></article>`).join("")}</div>
+ <h2>Bien acheter</h2><div class="card"><ul class="list">${BUY_TIPS.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;wireGo()}
+
+function renderManners(){view.innerHTML=`${backBtn()}<h2>Savoir-vivre</h2><p class="daymeta">Les codes qui font qu'on vous accueille avec le sourire.</p>
+ <div class="card"><dl class="gloss">${MANNERS.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
+ <div class="toolbar" style="margin-top:12px"><button class="btn" type="button" id="pm">▶ Écouter</button></div>`;
+ document.getElementById("pm").onclick=()=>speakList(MANNERS.map(([a,b])=>({label:a,text:a+". "+b})));wireGo()}
+
+function renderSky(){const age=moonAge("2026-10-26"),full=age>13&&age<17;
+ const txt="Le soir du vingt-six octobre, dans les dunes, c'est la pleine lune. Elle se lève à l'est, presque au moment où le soleil se couche à l'ouest. Regardez-la sortir de l'horizon : elle paraît énorme et orange. Comme elle est très lumineuse, on verra moins d'étoiles que lors d'une nuit sans lune, mais le désert sera éclairé comme en plein jour gris. Vers dix-neuf heures trente, cherchez à l'est un point jaune pâle qui ne scintille pas : c'est probablement Saturne. Haut à l'ouest, trois étoiles brillantes forment un grand triangle : Véga, Deneb et Altaïr. Au nord-est, un W couché : c'est Cassiopée.";
+ view.innerHTML=`${backBtn()}<h2>Le ciel des dunes</h2><p class="daymeta">Lundi 26 au soir, après le coucher du soleil vers ${hm(dayTimes("2026-10-26").maghrib)}.</p>
+ <div class="toolbar"><button class="btn primary" type="button" id="ps">▶ Écouter</button></div>
+ <div class="grid2">
+  <div class="card"><div class="k">Pleine lune</div><p>${full?"La lune est pleine ce soir-là.":"La lune est presque pleine."} Elle se lève à l'est quand le soleil se couche à l'ouest. Retournez-vous au moment du coucher : le spectacle est des deux côtés.</p></div>
+  <div class="card"><div class="k">Saturne</div><p>Un point jaune pâle qui ne scintille pas, vers l'est puis le sud-est en début de soirée. Les planètes brillent sans clignoter, les étoiles scintillent.</p></div>
+  <div class="card"><div class="k">Le triangle d'été</div><p>Haut vers l'ouest : Véga, Deneb et Altaïr, trois étoiles brillantes en grand triangle.</p></div>
+  <div class="card"><div class="k">Cassiopée</div><p>Au nord-est, cinq étoiles en forme de W. Facile à trouver pour les enfants.</p></div>
+ </div>
+ <p class="small" style="margin-top:10px">Positions indicatives pour 19h00–20h00. La pleine lune efface les étoiles faibles : regardez les plus brillantes.</p>`;
+ document.getElementById("ps").onclick=()=>speakList([{label:"Le ciel des dunes",text:txt}]);wireGo()}
+
+let mapFocus=null;
+const PLACES={
+ ghardaia:{x:150,y:120,l:"Ghardaïa",c:"ochre"},melika:{x:205,y:150,l:"Melika",c:"muted"},beniisguen:{x:250,y:205,l:"Béni Isguen",c:"ochre"},
+ tafilalt:{x:335,y:248,l:"Tafilalt",c:"ochre"},bounoura:{x:300,y:170,l:"Bounoura",c:"muted"},elatteuf:{x:420,y:200,l:"El Atteuf",c:"ochre"},palmeraie:{x:178,y:258,l:"Palmeraie",c:"palm"},aeroport:{x:420,y:360,l:"Aéroport",c:"muted"}};
+function renderMap(){const P=PLACES;const route1=["ghardaia","beniisguen","palmeraie"],route2=["elatteuf","tafilalt"];
+ const line=r=>r.map(k=>`${P[k].x},${P[k].y}`).join(" ");
+ const pin=(k)=>{const p=P[k],f=mapFocus===k;return `<g><circle cx="${p.x}" cy="${p.y}" r="${f?12:8}" fill="var(--${p.c})" stroke="var(--surface)" stroke-width="2"/>${f?`<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" stroke="var(--${p.c})" stroke-width="2"/>`:""}<text x="${p.x+13}" y="${p.y+7}" font-size="${f?24:20}" font-weight="${f?700:400}" fill="var(--fg)" font-family="Atkinson Hyperlegible, system-ui, sans-serif">${esc(p.l)}</text></g>`};
+ view.innerHTML=`${backBtn()}<h2>Carte de la vallée</h2><p class="daymeta">Carte schématique, utilisable sans réseau. Les positions sont approximatives.</p>
+ <div class="mapbox"><svg viewBox="0 0 540 420" role="img" aria-label="Carte schématique de la vallée du M'Zab">
+  <rect x="0" y="0" width="540" height="420" fill="var(--surface)"/>
+  <path d="M40 70 C 140 110, 200 160, 260 220 S 420 230, 520 250" fill="none" stroke="var(--door-soft)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M40 70 C 140 110, 200 160, 260 220 S 420 230, 520 250" fill="none" stroke="var(--door)" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="50" y="58" font-size="17" fill="var(--door)" font-family="IBM Plex Mono, monospace">oued M'Zab</text>
+  <ellipse cx="225" cy="245" rx="70" ry="26" fill="var(--palm-soft)"/>
+  <polyline points="${line(route1)}" fill="none" stroke="var(--ochre)" stroke-width="3" stroke-linejoin="round"/>
+  <polyline points="${line(route2)}" fill="none" stroke="var(--palm)" stroke-width="3" stroke-dasharray="8 5"/>
+  <line x1="335" y1="248" x2="150" y2="400" stroke="var(--palm)" stroke-width="3" stroke-dasharray="8 5"/>
+  <text x="20" y="404" font-size="17" fill="var(--palm)" font-family="IBM Plex Mono, monospace">↓ Sebseb, dunes de Mansoura (sud)</text>
+  ${Object.keys(P).map(pin).join("")}
+  <g transform="translate(500,40)"><text x="0" y="0" text-anchor="middle" font-size="18" fill="var(--muted)" font-family="IBM Plex Mono, monospace">N</text><path d="M0 6 L6 24 L0 19 L-6 24 Z" fill="var(--muted)"/></g>
+ </svg></div>
+ <div class="legend" style="margin-top:8px"><span><span class="dot" style="background:var(--ochre)"></span>Dim. 25 (trait plein)</span><span><span class="dot" style="background:var(--palm)"></span>Lun. 26 (pointillés)</span><span><span class="dot" style="background:var(--muted)"></span>Non visité</span></div>
+ <div class="toolbar" style="margin-top:10px">${Object.keys(P).map(k=>`<button class="btn" type="button" data-pl="${k}">${esc(P[k].l)}</button>`).join("")}</div>
+ <p class="small">Pour un itinéraire réel, ouvrez Google Maps : <a href="https://www.google.com/maps/search/?api=1&query=Beni+Isguen+Ghardaia" target="_blank" rel="noopener">Béni Isguen</a> · <a href="https://www.google.com/maps/search/?api=1&query=El+Atteuf+Ghardaia" target="_blank" rel="noopener">El Atteuf</a> · <a href="https://www.google.com/maps/search/?api=1&query=Tafilalt+Ghardaia" target="_blank" rel="noopener">Tafilalt</a>.</p>`;
+ view.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{mapFocus=b.dataset.pl;renderMap()});wireGo()}
+
+function renderWalks(){view.innerHTML=`${backBtn()}<h2>Balades à pied</h2><p class="daymeta">Deux parcours commentés, point par point. Appuyez sur ▶ en arrivant à chaque point.</p>
+ <div class="tiles">${WALKS.map(w=>`<button class="tile" type="button" data-go="${w.id}"><strong>${esc(w.name)}</strong><span>${esc(w.when)}</span></button>`).join("")}</div>`;wireGo()}
+function renderWalk(id){const w=WALKS.find(x=>x.id===id);const key="walk."+id;let cur=S.get(key,0);
+ let started=false;const draw=()=>{view.innerHTML=`<button class="btn back" type="button" data-go="balades">← Les balades</button><h2>${esc(w.name)}</h2><p class="daymeta">${esc(w.when)}</p>
+  <div class="toolbar"><button class="btn primary" type="button" id="wall">▶ Tout écouter</button><button class="btn" type="button" id="wnext">Point suivant ▶</button><button class="btn" type="button" id="wreset">Recommencer</button></div>
+  <div class="card walk"><ol>${w.pts.map((p,i)=>`<li class="${i===cur?"on":""}" id="wp${i}"><span class="num">${i+1}</span><div><strong>${esc(p.n)}</strong><p class="small" style="margin:2px 0 0;font-size:15px;color:var(--fg)">${esc(p.t)}</p></div><button class="btn" type="button" data-wp="${i}" aria-label="Écouter le point ${i+1}">▶</button></li>`).join("")}</ol></div>`;
+  const play=i=>{started=true;cur=i;S.set(key,i);view.querySelectorAll(".walk li").forEach((li,j)=>li.classList.toggle("on",j===i));speakList([{label:`${i+1}. ${w.pts[i].n}`,text:`Point ${i+1}. ${w.pts[i].n}. ${w.pts[i].t}`}])};
+  view.querySelectorAll("[data-wp]").forEach(b=>b.onclick=()=>play(+b.dataset.wp));
+  document.getElementById("wnext").onclick=()=>play(started?Math.min(cur+1,w.pts.length-1):cur);
+  document.getElementById("wreset").onclick=()=>{cur=0;S.set(key,0);draw()};
+  document.getElementById("wall").onclick=()=>speakList(w.pts.map((p,i)=>({label:`${i+1}. ${p.n}`,text:`Point ${i+1}. ${p.n}. ${p.t}`})));
+  wireGo()};draw()}
+function renderUnderstand(){view.innerHTML=`${backBtn()}<h2>Comprendre</h2><p class="daymeta">Les dossiers de fond, comme en début de guide.</p>
+ <h2>Histoire</h2><div class="card"><ol class="tl">${HISTORY.map(([y,t])=>`<li><div class="yr">${esc(y)}</div><div>${esc(t)}</div></li>`).join("")}</ol></div>
+ <h2>Les Mozabites et l'ibadisme</h2><div class="toolbar"><button class="btn" type="button" id="psoc">▶ Écouter</button></div>
+ <div class="card"><dl class="gloss">${SOCIETY.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
+ <h2>Le plan d'un ksar</h2><div class="svgbox">${SVG_KSAR}</div><p class="small">Schéma simplifié d'après la description de l'UNESCO : mosquée-forteresse au sommet, maisons en cercles jusqu'au rempart, puis cimetière et palmeraie.</p>
+ <h2>La maison mozabite</h2><div class="svgbox">${SVG_HOUSE}</div><p class="small">Schéma simplifié. La skifa coudée empêche de voir l'intérieur depuis la rue, et la maison s'organise autour de son patio.</p>
+ <h2>Le chemin de l'eau</h2><div class="svgbox">${SVG_WATER}</div><p class="small">De la crue à la palmeraie : barrages, nappe sous l'oued, puits, canaux en pierres plates (tissembades), puis partage entre les jardins.</p>`;
+ document.getElementById("psoc").onclick=()=>speakList(SOCIETY.map(([a,b])=>({label:a,text:a+". "+b})));wireGo()}
+function renderInfos(){view.innerHTML=`${backBtn()}<h2>Infos pratiques</h2><p class="daymeta">L'essentiel pour la vallée du M'Zab fin octobre.</p>
+ <div class="stack">${PRACTICAL.map(p=>`<div class="card"><h3>${esc(p.h)}</h3><ul class="list">${p.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}
+ <div class="card"><h3>Urgences en Algérie</h3><table class="pt"><tbody>${EMERGENCY.map(([a,n])=>`<tr><td>${esc(a)}</td><td class="contact">${n}</td></tr>`).join("")}</tbody></table><p class="small">Notez aussi le numéro de votre hébergement.</p></div></div>`;wireGo()}
+function renderAddr(){const h=S.get("host",{});view.innerHTML=`${backBtn()}<h2>Adresses</h2><p class="daymeta">Je n'ai trouvé aucune adresse de restaurant ou de boutique que je puisse vérifier. Demandez ses adresses à votre hôte et notez-les ici : elles restent sur ce téléphone.</p>
+ <div class="card host">${HOST_FIELDS.map(([k,l])=>`<label for="h-${k}">${esc(l)}<input id="h-${k}" data-h="${k}" value="${esc(h[k]||"")}" placeholder="Nom, quartier, ce qu'il faut y prendre"></label>`).join("")}</div>
+ <div class="card" style="margin-top:10px"><h3>Où trouver quoi</h3><ul class="list"><li><strong>Tapis et poteries :</strong> sous les arcades de la place du marché de Ghardaïa.</li><li><strong>Marché à la criée :</strong> place Lalla Achou, à Béni Isguen, sauf le vendredi.</li><li><strong>Repas mozabites :</strong> surtout en maison d'hôtes, sur demande.</li></ul></div>`;
+ view.querySelectorAll("[data-h]").forEach(i=>i.oninput=()=>{const v=S.get("host",{});v[i.dataset.h]=i.value;S.set("host",v)});wireGo()}
+function renderRead(){view.innerHTML=`${backBtn()}<h2>Pour aller plus loin</h2><p class="daymeta">Seulement des références vérifiées.</p>
+ <div class="stack">${BOOKS.map(b=>`<div class="card"><h3>${esc(b.t)}</h3><p class="small">${esc(b.a)} · ${esc(b.e)}</p><p>${esc(b.d)}</p></div>`).join("")}</div>`;wireGo()}
+
+function renderSources(){view.innerHTML=`${backBtn()}<h2>Sources</h2><p class="daymeta">Les faits de l'application ont été vérifiés dans ces sources. Quand elles divergent, l'application le signale ou reste prudente.</p>
+ <div class="card"><ul class="list">${SOURCES.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("")}</ul></div>
+ <div class="card" style="margin-top:10px"><div class="k">Points incertains</div><ul class="list"><li>Béni Isguen : la date de fondation varie selon les sources, du XIe au XVIe siècle.</li><li>L'heure exacte du marché à la criée : à confirmer le jour même.</li><li>Les tarifs des guides locaux et d'éventuels droits d'entrée : aucune source fiable.</li><li>Horaires des prières : calculés, à quelques minutes près.</li></ul></div>`;wireGo()}
+
+function renderPrayers(){const n=algiersNow();const days=["2026-10-25","2026-10-26","2026-10-27"];const labels={"2026-10-25":"Dim. 25","2026-10-26":"Lun. 26","2026-10-27":"Mar. 27"};
+ const nowM=toMin(n.hm);let nextKey=null;if(labels[n.date]){const t=dayTimes(n.date);const nx=PRAYERS.find(([k])=>toMin(hm(t[k]))>nowM);nextKey=nx?nx[0]:null}
+ view.innerHTML=`<h2>Horaires des prières</h2><p class="daymeta">Ghardaïa · calculés pour la vallée (aube à 18°, nuit à 17°, Asr standard).</p>
+ <div class="card scroll"><table class="pt"><thead><tr><th>Prière</th>${days.map(d=>`<th>${labels[d]}</th>`).join("")}</tr></thead><tbody>
+ ${PRAYERS.map(([k,a,b])=>`<tr class="${n.date&&nextKey===k?"next":""}"><td>${a}${b?`<div class="small">${b}</div>`:""}</td>${days.map(d=>`<td>${hm(dayTimes(d)[k])}</td>`).join("")}</tr>`).join("")}
+ </tbody></table></div>
+ <div class="card" style="margin-top:10px"><p><strong>Pourquoi c'est utile pour vous :</strong></p><ul class="list">
+  <li><strong>Asr</strong> : la vente aux enchères de Béni Isguen commence juste après.</li>
+  <li><strong>Maghreb</strong> : c'est l'heure du coucher du soleil, pour la palmeraie et les dunes.</li>
+  <li>Pendant les prières, certaines boutiques ferment quelques minutes et on évite les abords des mosquées.</li></ul></div>
+ <p class="small" style="margin-top:8px">Horaires calculés, à quelques minutes près. Les mosquées de la vallée peuvent appliquer un léger décalage : l'appel à la prière fait foi.</p>`}
+
+function renderKids(){const b=S.get("bingo",{});
+ view.innerHTML=`<h2>Le coin des enfants</h2><p class="daymeta">Bingo du M'Zab pendant les visites, quiz le soir. Chaque étape a aussi sa version enfants à écouter.</p>
+ <h2>Bingo du M'Zab</h2><div class="bingo">${BINGO.map(([ic,l],i)=>`<button type="button" id="bg${i}" data-bg="${i}" aria-pressed="${!!b[i]}"><span class="ic" aria-hidden="true">${ic}</span>${esc(l)}</button>`).join("")}</div>
+ <p class="small" id="bgmsg" style="margin-top:6px"></p><button class="btn" type="button" id="bgreset">Nouvelle partie</button>
+ <h2>Quiz du soir</h2><div class="card quiz">${QUIZ.map((q,i)=>`<div class="q"><strong>${i+1}. ${esc(q.q)}</strong><div class="opts">${q.o.map((o,j)=>`<button class="btn" type="button" data-q="${i}" data-o="${j}">${esc(o)}</button>`).join("")}</div><div class="fb" id="fb${i}"></div></div>`).join("")}<p id="score" class="small"></p></div>`;
+ const msg=()=>{const v=S.get("bingo",{}),c=Object.values(v).filter(Boolean).length;document.getElementById("bgmsg").textContent=c===BINGO.length?"Bingo complet ! Bravo les explorateurs.":`${c} sur ${BINGO.length} trouvés.`};msg();
+ view.querySelectorAll("[data-bg]").forEach(x=>x.onclick=()=>{const v=S.get("bingo",{});v[x.dataset.bg]=!v[x.dataset.bg];S.set("bingo",v);x.setAttribute("aria-pressed",!!v[x.dataset.bg]);msg()});
+ document.getElementById("bgreset").onclick=()=>{S.set("bingo",{});renderKids()};
+ let score=0;const ans=new Set();
+ view.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{const i=+x.dataset.q,j=+x.dataset.o,q=QUIZ[i];if(ans.has(i))return;ans.add(i);
+  view.querySelectorAll(`[data-q="${i}"]`).forEach(y=>{if(+y.dataset.o===q.a)y.classList.add("ok");else if(y===x)y.classList.add("ko")});
+  if(j===q.a)score++;document.getElementById("fb"+i).textContent=(j===q.a?"Bravo ! ":"Presque. ")+q.f;
+  if(ans.size===QUIZ.length)document.getElementById("score").textContent=`Score : ${score} sur ${QUIZ.length}`})}
+
+function renderPratique(){const bag=S.get("bag",{});
+ view.innerHTML=`<h2>Pratique</h2><p class="daymeta">Contacts, sac du jour, mots utiles.</p>
+ <div class="grid2">
+  <div class="card"><div class="k">Votre hébergement</div><p>Notez ici le nom et le numéro de votre hébergement, ou gardez-les dans vos contacts.</p></div>
+  <div class="card"><div class="k">Lumière</div><p>Coucher du soleil vers <strong>${hm(dayTimes("2026-10-25").maghrib)}</strong>. Belle lumière dans les 45 minutes qui précèdent.</p><p>Prière du Asr vers <strong>${hm(dayTimes("2026-10-25").asr)}</strong> : voir l'onglet Prières.</p></div>
+ </div>
+ <h2>Sac du jour</h2><div class="card check"><ul>${BAG.map((x,i)=>`<li><label><input type="checkbox" id="b${i}" data-b="${i}" ${bag[i]?"checked":""}> ${esc(x)}</label></li>`).join("")}</ul><div><button class="btn" type="button" id="resetbag">Tout décocher</button></div></div>
+ <h2>Mots utiles en darija</h2><div class="card phr">${PHRASES.map(([fr,ar],i)=>`<div><div class="ar">${esc(ar)}</div><div class="fr">${esc(fr)}</div></div><button class="btn" type="button" data-ph="${i}" aria-label="Écouter ${esc(fr)}">▶</button>`).join("")}</div>
+ <p class="small">La voix française prononce la darija de façon approximative.</p>`;
+ view.querySelectorAll("[data-b]").forEach(c=>c.onchange=()=>{const v=S.get("bag",{});v[c.dataset.b]=c.checked;S.set("bag",v)});
+ document.getElementById("resetbag").onclick=()=>{S.set("bag",{});renderPratique()};
+ view.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const [fr,ar]=PHRASES[+b.dataset.ph];speakList([{label:fr,text:ar}])});}
+
+/* ===================== BANDEAU ===================== */
+function renderNow(){const n=algiersNow(),el=document.getElementById("now"),nowM=toMin(n.hm);
+ const inStay=["2026-10-25","2026-10-26","2026-10-27"].includes(n.date)||n.date==="2026-10-24";
+ if(!inStay&&n.date>"2026-10-27"){el.innerHTML=`<span>Séjour à Ghardaïa terminé. Bon retour à Oran.</span>`;return}
+ const t=dayTimes(n.date>="2026-10-24"?n.date:"2026-10-25");const ss=toMin(hm(t.maghrib));
+ const nx=PRAYERS.filter(([k])=>k!=="sunrise").find(([k])=>toMin(hm(t[k]))>nowM);
+ let sun;const left=ss-nowM;
+ if(left>360)sun=`Coucher du soleil à <b>${hm(t.maghrib)}</b>`;
+ else if(left>45)sun=`Coucher du soleil à <b>${hm(t.maghrib)}</b> · belle lumière dans <b>${Math.floor((left-45)/60)?Math.floor((left-45)/60)+" h "+String((left-45)%60).padStart(2,"0"):((left-45)%60)+" min"}</b>`;
+ else if(left>0)sun=`<b>Belle lumière maintenant</b> · coucher du soleil dans <b>${left} min</b>`;
+ else sun=`Soleil couché à ${hm(t.maghrib)}`;
+ const d=DAYS.find(x=>x.date===n.date);let step="";
+ if(d){const c=currentStop(d,n.hm);const s=c!=null?d.stops[c]:d.stops[0];step=`<span>${c!=null?"En ce moment":"Prochaine étape"} : <b>${esc(s.name)}</b></span>`}
+ else if(n.date<"2026-10-25")step=`<span>Première visite <b>dim. 25 à 9h00</b> : ksar de Ghardaïa.</span>`;
+ el.innerHTML=`<div class="row"><span>Il est <b>${n.hm}</b> à Ghardaïa.</span>${step}</div><div class="row"><span>${sun}</span>${nx?`<span>Prochaine prière : <b>${nx[1]} ${hm(t[nx[0]])}</b></span>`:""}</div>`}
+
+/* ===================== ROUTAGE ===================== */
+function show(id){S.set("tab",id);renderTabs(id);synth&&synth.cancel();player.hidden=true;const d=DAYS.find(x=>x.id===id);
+ const R={guide:renderGuide,mzab:renderMzab,incontournables:renderMust,carte:renderMap,manger:renderFood,acheter:renderBuy,savoirvivre:renderManners,ciel:renderSky,prieres:renderPrayers,sources:renderSources,balades:renderWalks,comprendre:renderUnderstand,infos:renderInfos,adresses:renderAddr,lire:renderRead,"w-ghardaia":()=>renderWalk("w-ghardaia"),"w-beniisguen":()=>renderWalk("w-beniisguen"),enfants:renderKids,pratique:renderPratique};
+ if(d)renderDay(d);else(R[id]||renderGuide)();window.scrollTo({top:0})}
+
+renderNow();setInterval(renderNow,30000);
+const today=DAYS.find(d=>d.date===algiersNow().date);
+const ALL=[...TABS.map(t=>t.id),...GUIDE.map(g=>g.id),"w-ghardaia","w-beniisguen"];
+const hash=(location.hash||"").slice(1);
+show(ALL.includes(hash)?hash:(today?today.id:S.get("tab","j1")));
+
+/* Hors ligne (seulement sur le site GitHub Pages) */
+if("serviceWorker" in navigator&&/github\.io$/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
+</body>
+</html>
