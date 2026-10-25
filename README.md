@@ -18,3 +18,6 @@ Le bandeau du haut affiche l'heure de Ghardaïa, l'étape en cours, le compte à
 3. iPhone : Partager → « Sur l'écran d'accueil ». Android : menu → « Installer l'application ».
 
 Les faits ont été vérifiés auprès des sources listées dans la rubrique « Sources ».
+
+## Voix
+Les commentaires sont enregistrés dans `audio/` avec la voix française neuronale « Siwis » (moteur Piper, données Siwis sous licence CC BY 4.0, université d'Édimbourg). Si un fichier manque, l'application utilise la voix du téléphone. Réglage de la voix et de la vitesse dans l'onglet Pratique.

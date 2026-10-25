@@ -203,7 +203,7 @@ const DAYS = [
    {t:"13:00",e:"14:00",name:"Déjeuner",sub:"Spécialités mozabites et dattes de saison",tag:"Pause",
     say:"Pause déjeuner. Demandez si l'on sert une spécialité mozabite, comme l'ouchou souffer, un couscous aux herbes, ou l'ouchou tinni, un couscous aux dattes. Fin octobre, c'est la saison des dattes : goûtez-les fraîches. Voir la rubrique « Que manger »."},
    {t:"14:00",e:"15:30",name:"Repos",sub:"Piscine ou sieste, au plus chaud",tag:"Pause",
-    say:"Repos au plus chaud de la journée. Piscine ou sieste à votre hébergement, avant la fin d'après-midi."},
+    say:"Repos au plus chaud de la journée. Piscine ou sieste au logement, avant la fin d'après-midi."},
    {t:"15:30",e:"16:00",name:"Marché à la criée de Béni Isguen",sub:"Place Lalla Achou, après le Asr, sauf le vendredi",tag:"Option",opt:true,place:"beniisguen",
     say:"Le marché à la criée de Béni Isguen se tient sur la place Lalla Achou, en bordure du ksar, tous les jours sauf le vendredi, sous le contrôle des azzaba, le conseil religieux. Il commence généralement en fin d'après-midi, après la prière du Asr. Un crieur fait le tour de la place avec les objets à vendre et annonce les prix à voix haute. Les acheteurs enchérissent d'un geste. On peut regarder sans rien acheter. Tradition locale : les femmes mozabites ne traversent pas la place du marché.",
     kid:"Une vente à la criée, c'est comme un jeu : un monsieur fait le tour de la place en criant un prix. Si quelqu'un veut l'objet plus cher, il fait un petit signe. Le dernier qui a fait signe gagne l'objet. Regardez bien qui lève la main !",
@@ -522,6 +522,7 @@ const SVG_WATER = `<svg viewBox="0 0 600 260" role="img" aria-label="Le chemin d
  <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
 </svg>`;
 
+const SKY_TXT="Le soir du vingt-six octobre, dans les dunes, c'est la pleine lune. Elle se lève à l'est, presque au moment où le soleil se couche à l'ouest. Regardez-la sortir de l'horizon : elle paraît énorme et orange. Comme elle est très lumineuse, on verra moins d'étoiles que lors d'une nuit sans lune, mais le désert sera éclairé comme en plein jour gris. Vers dix-neuf heures trente, cherchez à l'est un point jaune pâle qui ne scintille pas : c'est probablement Saturne. Haut à l'ouest, trois étoiles brillantes forment un grand triangle : Véga, Deneb et Altaïr. Au nord-est, un W couché : c'est Cassiopée.";
 /* ===================== ASTRONOMIE ===================== */
 const LAT=32.49, LNG=3.67, TZ=1, R=Math.PI/180;
 function jdOf(y,m,d){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5}
@@ -545,16 +546,34 @@ function algiersNow(){const p=new Intl.DateTimeFormat("fr-CA",{timeZone:"Africa/
 function currentStop(day,t){let cur=null;day.stops.forEach((s,i)=>{if(s.t<=t)cur=i});return cur}
 
 /* ===================== AUDIO ===================== */
-const synth=window.speechSynthesis;let voice=null,queue=[],qi=0,paused=false;
-function pickVoice(){if(!synth)return;const v=synth.getVoices();voice=v.find(x=>/^fr(-|_)FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null}
+const synth=window.speechSynthesis;let voice=null,queue=[],qi=0,paused=false,curAudio=null;
+const AUD=new Audio();AUD.preload="auto";
+let MODE=S.get("voiceMode","naturelle"),RATE=S.get("voiceRate",1),VNAME=S.get("voiceName","");
+function frVoices(){return synth?synth.getVoices().filter(v=>/^fr/i.test(v.lang)):[]}
+function scoreVoice(v){let s=0;if(/fr(-|_)FR/i.test(v.lang))s+=2;if(/premium|enhanced|amélior|natural|neural|online/i.test(v.name))s+=5;if(/google/i.test(v.name))s+=3;if(/amélie|thomas|audrey|denise|henri|vivienne/i.test(v.name))s+=1;return s}
+function pickVoice(){const v=frVoices();voice=v.find(x=>x.name===VNAME)||v.sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]||null}
 if(synth){pickVoice();synth.onvoiceschanged=pickVoice}
 const player=document.getElementById("player"),plbl=document.getElementById("plbl"),ppause=document.getElementById("ppause");
-function speakList(items){if(!synth){note("La lecture audio n'est pas disponible sur cet appareil.");return}synth.cancel();queue=items;qi=0;paused=false;ppause.textContent="Pause";nextUtt()}
-function nextUtt(){if(qi>=queue.length){player.hidden=true;return}const it=queue[qi];player.hidden=false;plbl.textContent="Lecture : "+it.label;
- const u=new SpeechSynthesisUtterance(it.text);u.lang="fr-FR";if(voice)u.voice=voice;u.rate=it.kid?1:0.95;u.pitch=it.kid?1.1:1;u.onend=()=>{qi++;nextUtt()};u.onerror=()=>{player.hidden=true};synth.speak(u)}
-ppause.onclick=()=>{if(!synth)return;if(paused){synth.resume();paused=false;ppause.textContent="Pause"}else{synth.pause();paused=true;ppause.textContent="Reprendre"}};
-document.getElementById("pstop").onclick=()=>{synth&&synth.cancel();queue=[];player.hidden=true};
+function stopAll(){AUD.onended=null;AUD.onerror=null;AUD.pause();curAudio=null;synth&&synth.cancel()}
+function speakList(items){stopAll();queue=items;qi=0;paused=false;ppause.textContent="Pause";nextUtt()}
+function ttsSpeak(it){if(!synth){note("La lecture audio n'est pas disponible sur cet appareil.");return}
+ const u=new SpeechSynthesisUtterance(it.text);u.lang="fr-FR";if(voice)u.voice=voice;u.rate=RATE*(it.kid?1:0.97);u.pitch=it.kid?1.08:1;u.onend=()=>{qi++;nextUtt()};u.onerror=()=>{player.hidden=true};synth.speak(u)}
+function nextUtt(){if(qi>=queue.length){player.hidden=true;curAudio=null;return}const it=queue[qi];player.hidden=false;plbl.textContent="Lecture : "+it.label;
+ if(MODE==="naturelle"&&it.id){const a=AUD;curAudio=a;let fell=false;
+  const fall=()=>{if(fell)return;fell=true;curAudio=null;ttsSpeak(it)};
+  a.onended=()=>{curAudio=null;qi++;nextUtt()};a.onerror=fall;a.src="audio/"+it.id+".mp3";a.playbackRate=RATE;a.defaultPlaybackRate=RATE;
+  const pr=a.play();if(pr&&pr.catch)pr.catch(fall);return}
+ ttsSpeak(it)}
+ppause.onclick=()=>{if(curAudio){if(paused){curAudio.play();paused=false;ppause.textContent="Pause"}else{curAudio.pause();paused=true;ppause.textContent="Reprendre"}return}
+ if(!synth)return;if(paused){synth.resume();paused=false;ppause.textContent="Pause"}else{synth.pause();paused=true;ppause.textContent="Reprendre"}};
+document.getElementById("pstop").onclick=()=>{stopAll();queue=[];player.hidden=true};
 function note(m){plbl.textContent=m;player.hidden=false;setTimeout(()=>{if(!queue.length||qi>=queue.length)player.hidden=true},3500)}
+/* Liste de tous les textes lus, pour générer les fichiers audio */
+window.__ttsItems=()=>{const L=[];DAYS.forEach(d=>d.stops.forEach((s,i)=>{L.push({id:`${d.id}-${i}`,text:s.name+". "+s.say});if(s.kid)L.push({id:`${d.id}-${i}-k`,text:s.kid})}));
+ L.push({id:"intro",text:INTRO});MUST.forEach((m,i)=>L.push({id:"must-"+i,text:m.name+". "+m.why+" Le saviez-vous ? "+m.know}));
+ FOOD.forEach((f,i)=>L.push({id:"food-"+i,text:f.name+". "+f.what}));MANNERS.forEach(([a,b],i)=>L.push({id:"sv-"+i,text:a+". "+b}));
+ SOCIETY.forEach(([a,b],i)=>L.push({id:"soc-"+i,text:a+". "+b}));WALKS.forEach(w=>w.pts.forEach((p,i)=>L.push({id:`${w.id}-${i}`,text:`Point ${i+1}. ${p.n}. ${p.t}`})));
+ L.push({id:"ciel",text:SKY_TXT});return L};
 
 /* ===================== NAVIGATION ===================== */
 const view=document.getElementById("view"),tabs=document.getElementById("tabs");
@@ -608,11 +627,11 @@ function renderDay(day){const now=algiersNow(),cur=now.date===day.date?currentSt
   <div class="toolbar"><button class="btn" type="button" id="playday">▶ Toute la journée</button><button class="btn kid" type="button" id="playkid">▶ Journée version enfants</button></div>
   <div class="stack">${day.stops.map((s,i)=>stopHTML(day,s,i,i===cur)).join("")}</div>`;
  const find=k=>{const [d,i]=k.split("-");return DAYS.find(x=>x.id===d).stops[+i]};
- view.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.say);speakList([{label:s.name,text:s.name+". "+s.say}])});
- view.querySelectorAll("[data-kid]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.kid);speakList([{label:s.name+" (enfants)",text:s.kid,kid:true}])});
+ view.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.say);speakList([{id:b.dataset.say,label:s.name,text:s.name+". "+s.say}])});
+ view.querySelectorAll("[data-kid]").forEach(b=>b.onclick=()=>{const s=find(b.dataset.kid);speakList([{id:b.dataset.kid+"-k",label:s.name+" (enfants)",text:s.kid,kid:true}])});
  view.querySelectorAll("[data-map]").forEach(b=>b.onclick=()=>{mapFocus=b.dataset.map;show("carte")});
- document.getElementById("playday").onclick=()=>speakList(day.stops.map(s=>({label:s.name,text:s.name+". "+s.say})));
- document.getElementById("playkid").onclick=()=>speakList(day.stops.filter(s=>s.kid).map(s=>({label:s.name+" (enfants)",text:s.kid,kid:true})));
+ document.getElementById("playday").onclick=()=>speakList(day.stops.map((s,i)=>({id:`${day.id}-${i}`,label:s.name,text:s.name+". "+s.say})));
+ document.getElementById("playkid").onclick=()=>speakList(day.stops.map((s,i)=>s.kid?{id:`${day.id}-${i}-k`,label:s.name+" (enfants)",text:s.kid,kid:true}:null).filter(Boolean));
  view.querySelectorAll("[data-done]").forEach(c=>c.onchange=()=>S.set("done."+c.dataset.done,c.checked));wireGo();
  if(cur!=null){const el=document.getElementById("s-"+day.id+"-"+cur);el&&setTimeout(()=>el.scrollIntoView({block:"center"}),80)}}
 
@@ -625,21 +644,21 @@ function renderMzab(){view.innerHTML=`${backBtn()}<h2>Comprendre le M'Zab</h2><p
  <h2>Mots à connaître</h2><div class="card"><dl class="gloss">${GLOSS.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
  <h2>Visiter un ksar : guides et accès</h2><div class="card"><p>${esc(ACCESS)}</p></div>
  <h2>Les règles du séjour</h2><div class="card"><ul class="list"><li>Guide local obligatoire à Béni Isguen, fortement recommandé ailleurs.</li><li>Tenue couverte : épaules et jambes.</li><li>Aucune photo des habitants, surtout des femmes.</li><li>Ne pas fumer dans les rues de Béni Isguen.</li><li>On n'entre pas dans les mosquées.</li></ul></div>`;
- document.getElementById("pi").onclick=()=>speakList([{label:"Introduction",text:INTRO}]);wireGo()}
+ document.getElementById("pi").onclick=()=>speakList([{id:"intro",label:"Introduction",text:INTRO}]);wireGo()}
 
 function renderMust(){view.innerHTML=`${backBtn()}<h2>Les incontournables</h2><p class="daymeta">★★★ vaut le voyage · ★★ mérite le détour · ★ intéressant.</p>
  <div class="stack">${MUST.map((m,i)=>`<article class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap"><h3>${esc(m.name)}</h3>${stars(m.stars)}</div>
   <div class="meta"><span>⏱ ${esc(m.dur)}</span><span>☀ ${esc(m.best)}</span><span>📅 ${esc(m.day)}</span></div>
   <p>${esc(m.why)}</p><div class="box know"><strong>Le saviez-vous ?</strong> ${esc(m.know)}</div>
   <div><button class="btn" type="button" data-m="${i}">▶ Écouter</button></div></article>`).join("")}</div>`;
- view.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=MUST[+b.dataset.m];speakList([{label:m.name,text:m.name+". "+m.why+" Le saviez-vous ? "+m.know}])});wireGo()}
+ view.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=MUST[+b.dataset.m];speakList([{id:"must-"+b.dataset.m,label:m.name,text:m.name+". "+m.why+" Le saviez-vous ? "+m.know}])});wireGo()}
 
 function renderFood(){view.innerHTML=`${backBtn()}<h2>Que manger</h2><p class="daymeta">Les plats à goûter, avec l'avis probable des enfants. Demandez aussi à votre hôte trois spécialités mozabites de sa famille.</p>
  <div class="grid2">${FOOD.map((f,i)=>`<article class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><h3>${esc(f.name)}</h3><button class="btn" type="button" data-f="${i}" aria-label="Prononcer ${esc(f.name)}">▶</button></div>
   <span class="kidrate">Enfants : ${"😋".repeat(f.kids)}${f.kids===1?" à tester":f.kids===3?" valeur sûre":""}</span>
   <p>${esc(f.what)}</p><p class="small"><strong>Où :</strong> ${esc(f.where)}</p><p class="small"><strong>Conseil :</strong> ${esc(f.tip)}</p></article>`).join("")}</div>
  <h2>Manger en confiance</h2><div class="card"><ul class="list"><li>Eau en bouteille capsulée, y compris pour les enfants.</li><li>Lavez les dattes et les fruits, ou pelez-les.</li><li>Préférez les plats bien cuits et servis chauds.</li><li>Le soir, les grillades sont simples, rapides et appréciées des enfants.</li></ul></div>`;
- view.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=FOOD[+b.dataset.f];speakList([{label:f.name,text:f.name+". "+f.what}])});wireGo()}
+ view.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=FOOD[+b.dataset.f];speakList([{id:"food-"+b.dataset.f,label:f.name,text:f.name+". "+f.what}])});wireGo()}
 
 function renderBuy(){view.innerHTML=`${backBtn()}<h2>Qu'acheter</h2><p class="daymeta">L'artisanat de la vallée, et comment bien acheter.</p>
  <div class="stack">${BUY.map(b=>`<article class="card"><h3>${esc(b.name)}</h3><p><strong>Reconnaître la qualité :</strong> ${esc(b.how)}</p><p class="small"><strong>Prix :</strong> ${esc(b.price)}</p><div class="box know">${esc(b.note)}</div></article>`).join("")}</div>
@@ -648,10 +667,10 @@ function renderBuy(){view.innerHTML=`${backBtn()}<h2>Qu'acheter</h2><p class="da
 function renderManners(){view.innerHTML=`${backBtn()}<h2>Savoir-vivre</h2><p class="daymeta">Les codes qui font qu'on vous accueille avec le sourire.</p>
  <div class="card"><dl class="gloss">${MANNERS.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
  <div class="toolbar" style="margin-top:12px"><button class="btn" type="button" id="pm">▶ Écouter</button></div>`;
- document.getElementById("pm").onclick=()=>speakList(MANNERS.map(([a,b])=>({label:a,text:a+". "+b})));wireGo()}
+ document.getElementById("pm").onclick=()=>speakList(MANNERS.map(([a,b],i)=>({id:"sv-"+i,label:a,text:a+". "+b})));wireGo()}
 
 function renderSky(){const age=moonAge("2026-10-26"),full=age>13&&age<17;
- const txt="Le soir du vingt-six octobre, dans les dunes, c'est la pleine lune. Elle se lève à l'est, presque au moment où le soleil se couche à l'ouest. Regardez-la sortir de l'horizon : elle paraît énorme et orange. Comme elle est très lumineuse, on verra moins d'étoiles que lors d'une nuit sans lune, mais le désert sera éclairé comme en plein jour gris. Vers dix-neuf heures trente, cherchez à l'est un point jaune pâle qui ne scintille pas : c'est probablement Saturne. Haut à l'ouest, trois étoiles brillantes forment un grand triangle : Véga, Deneb et Altaïr. Au nord-est, un W couché : c'est Cassiopée.";
+ 
  view.innerHTML=`${backBtn()}<h2>Le ciel des dunes</h2><p class="daymeta">Lundi 26 au soir, après le coucher du soleil vers ${hm(dayTimes("2026-10-26").maghrib)}.</p>
  <div class="toolbar"><button class="btn primary" type="button" id="ps">▶ Écouter</button></div>
  <div class="grid2">
@@ -661,7 +680,7 @@ function renderSky(){const age=moonAge("2026-10-26"),full=age>13&&age<17;
   <div class="card"><div class="k">Cassiopée</div><p>Au nord-est, cinq étoiles en forme de W. Facile à trouver pour les enfants.</p></div>
  </div>
  <p class="small" style="margin-top:10px">Positions indicatives pour 19h00–20h00. La pleine lune efface les étoiles faibles : regardez les plus brillantes.</p>`;
- document.getElementById("ps").onclick=()=>speakList([{label:"Le ciel des dunes",text:txt}]);wireGo()}
+ document.getElementById("ps").onclick=()=>speakList([{id:"ciel",label:"Le ciel des dunes",text:SKY_TXT}]);wireGo()}
 
 let mapFocus=null;
 const PLACES={
@@ -696,11 +715,11 @@ function renderWalk(id){const w=WALKS.find(x=>x.id===id);const key="walk."+id;le
  let started=false;const draw=()=>{view.innerHTML=`<button class="btn back" type="button" data-go="balades">← Les balades</button><h2>${esc(w.name)}</h2><p class="daymeta">${esc(w.when)}</p>
   <div class="toolbar"><button class="btn primary" type="button" id="wall">▶ Tout écouter</button><button class="btn" type="button" id="wnext">Point suivant ▶</button><button class="btn" type="button" id="wreset">Recommencer</button></div>
   <div class="card walk"><ol>${w.pts.map((p,i)=>`<li class="${i===cur?"on":""}" id="wp${i}"><span class="num">${i+1}</span><div><strong>${esc(p.n)}</strong><p class="small" style="margin:2px 0 0;font-size:15px;color:var(--fg)">${esc(p.t)}</p></div><button class="btn" type="button" data-wp="${i}" aria-label="Écouter le point ${i+1}">▶</button></li>`).join("")}</ol></div>`;
-  const play=i=>{started=true;cur=i;S.set(key,i);view.querySelectorAll(".walk li").forEach((li,j)=>li.classList.toggle("on",j===i));speakList([{label:`${i+1}. ${w.pts[i].n}`,text:`Point ${i+1}. ${w.pts[i].n}. ${w.pts[i].t}`}])};
+  const play=i=>{started=true;cur=i;S.set(key,i);view.querySelectorAll(".walk li").forEach((li,j)=>li.classList.toggle("on",j===i));speakList([{id:`${w.id}-${i}`,label:`${i+1}. ${w.pts[i].n}`,text:`Point ${i+1}. ${w.pts[i].n}. ${w.pts[i].t}`}])};
   view.querySelectorAll("[data-wp]").forEach(b=>b.onclick=()=>play(+b.dataset.wp));
   document.getElementById("wnext").onclick=()=>play(started?Math.min(cur+1,w.pts.length-1):cur);
   document.getElementById("wreset").onclick=()=>{cur=0;S.set(key,0);draw()};
-  document.getElementById("wall").onclick=()=>speakList(w.pts.map((p,i)=>({label:`${i+1}. ${p.n}`,text:`Point ${i+1}. ${p.n}. ${p.t}`})));
+  document.getElementById("wall").onclick=()=>speakList(w.pts.map((p,i)=>({id:`${w.id}-${i}`,label:`${i+1}. ${p.n}`,text:`Point ${i+1}. ${p.n}. ${p.t}`})));
   wireGo()};draw()}
 function renderUnderstand(){view.innerHTML=`${backBtn()}<h2>Comprendre</h2><p class="daymeta">Les dossiers de fond, comme en début de guide.</p>
  <h2>Histoire</h2><div class="card"><ol class="tl">${HISTORY.map(([y,t])=>`<li><div class="yr">${esc(y)}</div><div>${esc(t)}</div></li>`).join("")}</ol></div>
@@ -709,7 +728,7 @@ function renderUnderstand(){view.innerHTML=`${backBtn()}<h2>Comprendre</h2><p cl
  <h2>Le plan d'un ksar</h2><div class="svgbox">${SVG_KSAR}</div><p class="small">Schéma simplifié d'après la description de l'UNESCO : mosquée-forteresse au sommet, maisons en cercles jusqu'au rempart, puis cimetière et palmeraie.</p>
  <h2>La maison mozabite</h2><div class="svgbox">${SVG_HOUSE}</div><p class="small">Schéma simplifié. La skifa coudée empêche de voir l'intérieur depuis la rue, et la maison s'organise autour de son patio.</p>
  <h2>Le chemin de l'eau</h2><div class="svgbox">${SVG_WATER}</div><p class="small">De la crue à la palmeraie : barrages, nappe sous l'oued, puits, canaux en pierres plates (tissembades), puis partage entre les jardins.</p>`;
- document.getElementById("psoc").onclick=()=>speakList(SOCIETY.map(([a,b])=>({label:a,text:a+". "+b})));wireGo()}
+ document.getElementById("psoc").onclick=()=>speakList(SOCIETY.map(([a,b],i)=>({id:"soc-"+i,label:a,text:a+". "+b})));wireGo()}
 function renderInfos(){view.innerHTML=`${backBtn()}<h2>Infos pratiques</h2><p class="daymeta">L'essentiel pour la vallée du M'Zab fin octobre.</p>
  <div class="stack">${PRACTICAL.map(p=>`<div class="card"><h3>${esc(p.h)}</h3><ul class="list">${p.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}
  <div class="card"><h3>Urgences en Algérie</h3><table class="pt"><tbody>${EMERGENCY.map(([a,n])=>`<tr><td>${esc(a)}</td><td class="contact">${n}</td></tr>`).join("")}</tbody></table><p class="small">Notez aussi le numéro de votre hébergement.</p></div></div>`;wireGo()}
@@ -756,9 +775,21 @@ function renderPratique(){const bag=S.get("bag",{});
   <div class="card"><div class="k">Votre hébergement</div><p>Notez ici le nom et le numéro de votre hébergement, ou gardez-les dans vos contacts.</p></div>
   <div class="card"><div class="k">Lumière</div><p>Coucher du soleil vers <strong>${hm(dayTimes("2026-10-25").maghrib)}</strong>. Belle lumière dans les 45 minutes qui précèdent.</p><p>Prière du Asr vers <strong>${hm(dayTimes("2026-10-25").asr)}</strong> : voir l'onglet Prières.</p></div>
  </div>
+ <h2>Voix des commentaires</h2><div class="card host">
+  <label for="vmode">Voix utilisée<select id="vmode" class="btn" style="width:100%"><option value="naturelle">Voix enregistrée (recommandée)</option><option value="tel">Voix du téléphone</option></select></label>
+  <label for="vrate">Vitesse : <span id="vrv"></span><input id="vrate" type="range" min="0.8" max="1.25" step="0.05"></label>
+  <label for="vname">Voix du téléphone (secours)<select id="vname" class="btn" style="width:100%"></select></label>
+  <div><button class="btn" type="button" id="vtest">▶ Tester</button></div>
+  <p class="small">La voix enregistrée est une voix de synthèse neuronale française (« Siwis », données CC BY 4.0). Si un fichier manque, l'application bascule sur la voix du téléphone. Pour une meilleure voix du téléphone sur iPhone : Réglages → Accessibilité → Contenu énoncé → Voix → Français, version « Améliorée ».</p></div>
  <h2>Sac du jour</h2><div class="card check"><ul>${BAG.map((x,i)=>`<li><label><input type="checkbox" id="b${i}" data-b="${i}" ${bag[i]?"checked":""}> ${esc(x)}</label></li>`).join("")}</ul><div><button class="btn" type="button" id="resetbag">Tout décocher</button></div></div>
  <h2>Mots utiles en darija</h2><div class="card phr">${PHRASES.map(([fr,ar],i)=>`<div><div class="ar">${esc(ar)}</div><div class="fr">${esc(fr)}</div></div><button class="btn" type="button" data-ph="${i}" aria-label="Écouter ${esc(fr)}">▶</button>`).join("")}</div>
  <p class="small">La voix française prononce la darija de façon approximative.</p>`;
+ const vm=document.getElementById("vmode"),vr=document.getElementById("vrate"),vn=document.getElementById("vname"),vrv=document.getElementById("vrv");
+ vm.value=MODE;vr.value=RATE;vrv.textContent="×"+RATE;
+ const fillV=()=>{const L=frVoices();vn.innerHTML=L.length?L.map(v=>`<option value="${esc(v.name)}" ${voice&&v.name===voice.name?"selected":""}>${esc(v.name)}</option>`).join(""):`<option>Aucune voix française trouvée</option>`};fillV();if(synth)synth.addEventListener("voiceschanged",fillV);
+ vm.onchange=()=>{MODE=vm.value;S.set("voiceMode",MODE)};vr.oninput=()=>{RATE=+vr.value;S.set("voiceRate",RATE);vrv.textContent="×"+RATE};
+ vn.onchange=()=>{VNAME=vn.value;S.set("voiceName",VNAME);pickVoice()};
+ document.getElementById("vtest").onclick=()=>speakList([{id:"j1-0",label:"Test de la voix",text:"Bienvenue à Ghardaïa. Ceci est un test de la voix."}]);
  view.querySelectorAll("[data-b]").forEach(c=>c.onchange=()=>{const v=S.get("bag",{});v[c.dataset.b]=c.checked;S.set("bag",v)});
  document.getElementById("resetbag").onclick=()=>{S.set("bag",{});renderPratique()};
  view.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const [fr,ar]=PHRASES[+b.dataset.ph];speakList([{label:fr,text:ar}])});}
